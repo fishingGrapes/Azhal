@@ -4,8 +4,8 @@ project "imgui"
     language "C++"
 
 	outputdir = "%{cfg.buildcfg}_%{cfg.architecture}"	
-    targetdir ("../../bin/" .. outputdir)
-    objdir ("../../temp/int/" .. outputdir)
+    targetdir ("../../bin/%{prj.name}/" .. outputdir)
+    objdir ("../../temp/int/%{prj.name}/" .. outputdir)
 	
     --Common Files
     files

@@ -36,7 +36,7 @@
 temp/
 bin/
 .vscode/
-azhal/external/cloc/
+common/external/cloc/
 JSON/
 
 # Files
