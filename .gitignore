@@ -36,7 +36,8 @@
 temp/
 bin/
 .vscode/
-azhal/external/cloc
+azhal/external/cloc/
+JSON/
 
 # Files
 *.user
@@ -54,4 +55,5 @@ count_lines_of_code.bat
 premake_clean_projects.bat
 premake_gen_projects.bat
 premake_regen_projects.bat
+
 
