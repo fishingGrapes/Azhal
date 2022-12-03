@@ -1,9 +1,6 @@
 [submodule "azhal/external/glfw"]
 	path = azhal/external/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "azhal/external/glm"]
-	path = azhal/external/glm
-	url = https://github.com/g-truc/glm.git
 [submodule "azhal/external/imgui"]
 	path = azhal/external/imgui
 	url = https://github.com/ocornut/imgui.git
