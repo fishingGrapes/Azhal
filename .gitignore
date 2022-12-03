@@ -1,0 +1,57 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Directories
+.vs/
+temp/
+bin/
+.vscode/
+azhal/external/cloc
+
+# Files
+*.user
+*.sln
+*.vcxproj
+*.filters
+*.user
+*.hint
+*.spv
+*.cap
+
+# Batch files
+clean_binaries.bat
+count_lines_of_code.bat
+premake_clean_projects.bat
+premake_gen_projects.bat
+premake_regen_projects.bat
+
