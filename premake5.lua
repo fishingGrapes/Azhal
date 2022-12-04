@@ -21,8 +21,9 @@ IncludePaths =  {}
 IncludePaths["cxxopts"] = "external/cxxopts/include"
 IncludePaths["glfw"] = "external/glfw/include"
 IncludePaths["glm"] = "external/glm"
-IncludePaths["imgui"] = "external/imgui/"
+IncludePaths["imgui"] = "external/imgui"
 IncludePaths["spdlog"] = "external/spdlog/include"
+IncludePaths["common"] = "common/include"
 
 group "Dependencies"
 	include ("external/glfw")
@@ -39,26 +40,17 @@ project "common"
 	targetdir ("bin/%{prj.name}/" .. outputdir)
 	objdir ("temp/int/%{prj.name}/" .. outputdir)
 
-	disablewarnings { "26812" }
-	
-	--Set the Precompiled Header
-	--IMPORTANT: Project name must be Hardcoded
-	 pchheader ("cmnpch.h")
-	 pchsource ("common/src/cmnpch.cpp")
-
-	files
-	{
-		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.c",
-		"%{prj.name}/src/**.cpp"
-	}
-
 	includedirs
 	{
-		"%{prj.name}/src",
 		"%{IncludePaths.cxxopts}",
 		"%{IncludePaths.glm}",
 		"%{IncludePaths.spdlog}"
+	}
+	
+	files
+	{
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.cpp"
 	}
 	
 	defines
@@ -116,27 +108,25 @@ project "azhal"
 
 	disablewarnings { "26812" }
 
-	files
-	{
-		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.c",
-		"%{prj.name}/src/**.cpp"
-	}
-
 	includedirs
 	{
-		"common/src",
-		"%{prj.name}/src",
 		"%{IncludePaths.glfw}",
 		"%{IncludePaths.glm}",
 		"%{IncludePaths.imgui}",
 		"%{IncludePaths.spdlog}",
+		"%{IncludePaths.common}",
 		"$(VULKAN_SDK)/Include"
+	}
+	
+	files
+	{
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.cpp"
 	}
 	
 	libdirs 
 	{ 	
-		"$(VULKAN_SDK)/Lib",
+		"$(VULKAN_SDK)/Lib"
 	}
 
 	links
@@ -205,11 +195,10 @@ project "sandbox"
 
 	includedirs
 	{
-		"common/src",
-		"azhal/src",
 		"%{IncludePaths.cxxopts}",
 		"%{IncludePaths.glm}",
-		"%{IncludePaths.spdlog}"
+		"%{IncludePaths.spdlog}",
+		"%{IncludePaths.common}"
 	}
 
 	links 
