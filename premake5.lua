@@ -18,15 +18,15 @@ outputdir = "%{cfg.buildcfg}_%{cfg.architecture}"
 
 -- Include directories relative to root folder (solution directory)
 IncludePaths =  {}
-IncludePaths["cxxopts"] = "common/external/cxxopts/include"
-IncludePaths["glfw"] = "azhal/external/glfw/include"
-IncludePaths["glm"] = "common/external/glm"
-IncludePaths["imgui"] = "azhal/external/imgui/"
-IncludePaths["spdlog"] = "common/external/spdlog/include"
+IncludePaths["cxxopts"] = "external/cxxopts/include"
+IncludePaths["glfw"] = "external/glfw/include"
+IncludePaths["glm"] = "external/glm"
+IncludePaths["imgui"] = "external/imgui/"
+IncludePaths["spdlog"] = "external/spdlog/include"
 
 group "Dependencies"
-	include ("azhal/external/glfw")
-	include ("azhal/external/imgui")
+	include ("external/glfw")
+	include ("external/imgui")
 group ""
 
 project "common"

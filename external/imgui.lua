@@ -1,11 +1,11 @@
 project "imgui"
-	location "../../temp/build/imgui"
+	location "../temp/build/imgui"
     kind "StaticLib"
     language "C++"
 
 	outputdir = "%{cfg.buildcfg}_%{cfg.architecture}"	
-    targetdir ("../../bin/%{prj.name}/" .. outputdir)
-    objdir ("../../temp/int/%{prj.name}/" .. outputdir)
+    targetdir ("../bin/%{prj.name}/" .. outputdir)
+    objdir ("../temp/int/%{prj.name}/" .. outputdir)
 	
     --Common Files
     files
