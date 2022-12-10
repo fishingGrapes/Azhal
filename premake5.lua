@@ -24,6 +24,7 @@ IncludePaths["glm"] = "external/glm"
 IncludePaths["imgui"] = "external/imgui"
 IncludePaths["spdlog"] = "external/spdlog/include"
 IncludePaths["common"] = "common/include"
+IncludePaths["azhal"] = "azhal/include"
 
 group "Dependencies"
 	include ("external/glfw")
@@ -49,6 +50,7 @@ project "common"
 	
 	files
 	{
+		"%{prj.name}/include/**.h",
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp"
 	}
@@ -110,6 +112,7 @@ project "azhal"
 
 	includedirs
 	{
+		"%{IncludePaths.cxxopts}",
 		"%{IncludePaths.glfw}",
 		"%{IncludePaths.glm}",
 		"%{IncludePaths.imgui}",
@@ -120,6 +123,7 @@ project "azhal"
 	
 	files
 	{
+		"%{prj.name}/include/**.h",
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp"
 	}
@@ -139,7 +143,7 @@ project "azhal"
 	
 	defines
 	{
-		--"VULKAN_HPP_NO_EXCEPTIONS",
+		"VULKAN_HPP_NO_EXCEPTIONS",
 		"VULKAN_HPP_NO_CONSTRUCTORS",
 		"GLFW_INCLUDE_VULKAN",
 		"GLM_FORCE_RADIANS",
@@ -158,7 +162,8 @@ project "azhal"
 		optimize "off"
 		defines
 		{ 
-			"AZHAL_DEBUG"
+			"AZHAL_DEBUG",
+			"AZHAL_ENABLE_LOGGING"
 		}			
 		
 	filter "configurations:Release"
@@ -167,14 +172,20 @@ project "azhal"
 		optimize "Debug"
 		defines
 		{ 
-			"AZHAL_RELEASE"
+			"AZHAL_RELEASE",
+			"AZHAL_ENABLE_LOGGING"
 		}
 	
 	filter "configurations:Final"
 		runtime "Release"
 		symbols "off"
 		optimize "Full"
-		defines{ "AZHAL_FINAL" }
+		defines
+		{ 
+			"AZHAL_FINAL",
+			--"VULKAN_HPP_NO_EXCEPTIONS",
+			--"VK_DEADLY_VALIDATION"
+		}
 
 
 project "sandbox"
@@ -198,7 +209,9 @@ project "sandbox"
 		"%{IncludePaths.cxxopts}",
 		"%{IncludePaths.glm}",
 		"%{IncludePaths.spdlog}",
-		"%{IncludePaths.common}"
+		"%{IncludePaths.common}",
+		"%{IncludePaths.azhal}",
+		"$(VULKAN_SDK)/Include"
 	}
 
 	links 
@@ -221,7 +234,8 @@ project "sandbox"
 		optimize "off"
 		defines
 		{ 
-			"AZHAL_DEBUG"
+			"AZHAL_DEBUG",
+			"AZHAL_ENABLE_LOGGING"
 		}			
 		
 	filter "configurations:Release"
@@ -230,7 +244,8 @@ project "sandbox"
 		optimize "Debug"
 		defines
 		{ 
-			"AZHAL_RELEASE"
+			"AZHAL_RELEASE",
+			"AZHAL_ENABLE_LOGGING"
 		}
 	
 	filter "configurations:Final"

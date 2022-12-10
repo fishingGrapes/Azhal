@@ -1,5 +1,8 @@
 #pragma once
 
+// boolean
+using Bool = bool;
+
 // Float and double
 using Float = float_t;
 using Double = double_t;

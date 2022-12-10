@@ -3,13 +3,15 @@
 #include "spdlog/logger.h"
 #include "spdlog/fmt/ostr.h"
 
-class CAzhalLog
+#include "azhalKeywords.h"
+
+class AzhalLogger
 {
 public:
-	CAzhalLog() = delete;
-	static void Init(const char* loggerName);
+	AzhalLogger() = delete;
+	static void Init( const char* loggerName );
 
-	inline static std::shared_ptr<spdlog::logger> GetLogger()
+	AZHAL_INLINE static std::shared_ptr<spdlog::logger> Get()
 	{
 		return s_logger;
 	};
@@ -19,13 +21,13 @@ private:
 };
 
 
-#if defined(AZHAL_DEBUG) || defined(AZHAL_RELEASE)
+#ifdef AZHAL_ENABLE_LOGGING
 
-#define AZHAL_LOG_TRACE(...)	  CAzhalLog::GetLogger()->trace(__VA_ARGS__)
-#define AZHAL_LOG_INFO(...)       CAzhalLog::GetLogger()->info(__VA_ARGS__)
-#define AZHAL_LOG_WARN(...)       CAzhalLog::GetLogger()->warn(__VA_ARGS__)
-#define AZHAL_LOG_ERROR(...)      CAzhalLog::GetLogger()->error(__VA_ARGS__)
-#define AZHAL_LOG_CRITICAL(...)   CAzhalLog::GetLogger()->critical(__VA_ARGS__)
+#define AZHAL_LOG_TRACE(...)	  AzhalLogger::Get()->trace(__VA_ARGS__)
+#define AZHAL_LOG_INFO(...)       AzhalLogger::Get()->info(__VA_ARGS__)
+#define AZHAL_LOG_WARN(...)       AzhalLogger::Get()->warn(__VA_ARGS__)
+#define AZHAL_LOG_ERROR(...)      AzhalLogger::Get()->error(__VA_ARGS__)
+#define AZHAL_LOG_CRITICAL(...)   AzhalLogger::Get()->critical(__VA_ARGS__)
 
 #else
 

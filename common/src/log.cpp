@@ -3,9 +3,9 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 
-std::shared_ptr<spdlog::logger> CAzhalLog::s_logger;
+std::shared_ptr<spdlog::logger> AzhalLogger::s_logger;
 
-void CAzhalLog::Init( const char* loggerName )
+void AzhalLogger::Init( const char* loggerName )
 {
 	spdlog::set_pattern( "%^[%T] %n: %v%$" );
 
