@@ -8,13 +8,21 @@ Int32 main()
 
 	using namespace azhal;
 
-	WindowPtr pWindow = std::make_unique<Window>( "Azhal Sandbox", 1280, 720 );
-	RendererPtr pRenderer = std::make_unique<Renderer>( pWindow );
+	WindowPtr pSandboxWindow = std::make_unique<Window>( "Azhal Sandbox", 1280, 720 );
+
+	RendererCreateInfo renderer_create_info
+	{
+		.pWindow = pSandboxWindow,
+		.IsValidationLayersEnabled = true,
+		.IsGpuAssistedValidationEnabled = false,
+		.DebugMessageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo
+	};
+	RendererPtr pRenderer = std::make_unique<Renderer>( renderer_create_info );
 
 	do
 	{
 		// update loop
-	} while( pWindow->Poll() );
+	} while( pSandboxWindow->Poll() );
 
 	return 0;
 }

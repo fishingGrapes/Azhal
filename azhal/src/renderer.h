@@ -5,41 +5,34 @@ namespace azhal
 {
 	class Window;
 
+	struct RendererCreateInfo
+	{
+	public:
+		const WindowPtr& pWindow = nullptr;
+		Bool IsValidationLayersEnabled = false;
+		Bool IsGpuAssistedValidationEnabled = false;
+		vk::DebugUtilsMessageSeverityFlagBitsEXT DebugMessageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose;
+	};
+
 	class Renderer
 	{
 	public:
-		explicit Renderer( const WindowPtr& pWindow );
+		explicit Renderer( const RendererCreateInfo& renderer_create_info );
 		~Renderer();
 
 		Renderer() = delete;
 		Renderer( const Renderer& ) = delete;
-
-		//Bool Init();
-
-
-		AZHAL_INLINE void EnableValdiationLayers()
-		{
-			m_validationLayersEnabled = true;
-		}
-
-		AZHAL_INLINE void EnableGpuAssistedValdiation()
-		{
-			m_gpuAssistedValidationEnabled = true;
-		}
-
-		AZHAL_INLINE void SetLogLevel( vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity )
-		{
-			m_debugMessageSeverity = message_severity;
-		}
 
 		static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback( vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity,
 			vk::DebugUtilsMessageTypeFlagBitsEXT message_type, const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData );
 
 	private:
 		void CreateInstance();
+		void CreateDevice();
 
 		std::vector<const char*> GetRequiredExtensions() const;
 		std::vector<const char*> GetValidationLayers() const;
+		vk::PhysicalDevice GetSuitablePhysicalDevice() const;
 		vk::DebugUtilsMessengerCreateInfoEXT GetDebugUtilsMessengerCreateInfo( const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn ) const;
 
 	private:

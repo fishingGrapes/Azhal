@@ -7,12 +7,13 @@
 
 namespace azhal
 {
-	Renderer::Renderer( const WindowPtr& pWindow )
-		: m_validationLayersEnabled( false )
-		, m_gpuAssistedValidationEnabled( false )
-		, m_debugMessageSeverity( vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo )
+	Renderer::Renderer( const RendererCreateInfo& renderer_create_info )
+		: m_validationLayersEnabled( renderer_create_info.IsValidationLayersEnabled )
+		, m_gpuAssistedValidationEnabled( renderer_create_info.IsGpuAssistedValidationEnabled )
+		, m_debugMessageSeverity( renderer_create_info.DebugMessageSeverity )
 	{
 		CreateInstance();
+		CreateDevice();
 	}
 
 	Renderer::~Renderer()
@@ -37,12 +38,7 @@ namespace azhal
 			.apiVersion = VK_API_VERSION_1_3
 		};
 
-		std::vector<const char*> validation_layers {};
-		if( m_validationLayersEnabled )
-		{
-			validation_layers = GetValidationLayers();
-		}
-
+		const std::vector<const char*>& validation_layers = GetValidationLayers();
 		const std::vector<const char*>& required_extensions = GetRequiredExtensions();
 
 		vk::InstanceCreateInfo instance_create_info
@@ -68,23 +64,28 @@ namespace azhal
 		const vk::StructureChain<vk::InstanceCreateInfo> instance_create_chain { instance_create_info };
 #endif
 
-		auto instance_create_rv = vk::createInstance( instance_create_chain.get<vk::InstanceCreateInfo>() );
-		m_instance = CheckResultValue( instance_create_rv, "failed to create instance" );
+		vk::ResultValue instance_create_rv = vk::createInstance( instance_create_chain.get<vk::InstanceCreateInfo>() );
+		m_instance = CheckVkResultValue( instance_create_rv, "failed to create instance" );
 
 		m_DynamicDispatchInstance = vk::DispatchLoaderDynamic( m_instance, vkGetInstanceProcAddr );
 
 #ifdef AZHAL_ENABLE_LOGGING
-		auto debug_msgnr_rv = m_instance.createDebugUtilsMessengerEXT( debug_utils_create_info, VK_NULL_HANDLE, m_DynamicDispatchInstance );
-		m_debugMessenger = CheckResultValue( debug_msgnr_rv, "failed to create debug messenger" );
+		vk::ResultValue debug_msgnr_rv = m_instance.createDebugUtilsMessengerEXT( debug_utils_create_info, VK_NULL_HANDLE, m_DynamicDispatchInstance );
+		m_debugMessenger = CheckVkResultValue( debug_msgnr_rv, "failed to create debug messenger" );
 #endif
+	}
+
+	void Renderer::CreateDevice()
+	{
+		vk::PhysicalDevice physical_device = GetSuitablePhysicalDevice();
 	}
 
 	std::vector<const char*> Renderer::GetRequiredExtensions() const
 	{
 		Uint32 glfw_extension_count = 0;
-		const char** ppGlfw_extensions = glfwGetRequiredInstanceExtensions( &glfw_extension_count );
+		const char** ppGlfwExtensions = glfwGetRequiredInstanceExtensions( &glfw_extension_count );
 
-		std::vector<const char*> glfw_extensions( ppGlfw_extensions, ppGlfw_extensions + glfw_extension_count );
+		std::vector<const char*> glfw_extensions( ppGlfwExtensions, ppGlfwExtensions + glfw_extension_count );
 
 #ifdef AZHAL_ENABLE_LOGGING
 		glfw_extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
@@ -98,9 +99,19 @@ namespace azhal
 		std::vector<const char*> validation_layers;
 
 		if( m_validationLayersEnabled )
-			validation_layers.push_back( "VK_LAYER_CHRONOS_validation" );
+			validation_layers.push_back( "VK_LAYER_KHRONOS_validation" );
 
 		return validation_layers;
+	}
+
+	vk::PhysicalDevice Renderer::GetSuitablePhysicalDevice() const
+	{
+		vk::ResultValue physical_devices_rv = m_instance.enumeratePhysicalDevices();
+		const std::vector<vk::PhysicalDevice>& physical_devices = CheckVkResultValue( physical_devices_rv, "failed to enumerate physical devices" );
+
+		// TODO: check for appropriate physical device props
+
+		return physical_devices[ 0 ];
 	}
 
 	vk::DebugUtilsMessengerCreateInfoEXT Renderer::GetDebugUtilsMessengerCreateInfo( const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn ) const
@@ -139,21 +150,43 @@ namespace azhal
 	VKAPI_ATTR vk::Bool32 VKAPI_CALL Renderer::DebugCallback( vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity, vk::DebugUtilsMessageTypeFlagBitsEXT message_type,
 		const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData )
 	{
+		std::string message_type_name = "";
+		switch( message_type )
+		{
+		case vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral:
+			message_type_name = "[vk_general]";
+			break;
+		case vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation:
+			message_type_name = "[vk_validation]";
+			break;
+		case vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance:
+			message_type_name = "[vk_performance]";
+			break;
+		case vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding:
+			message_type_name = "[vk_deviceAddressBinding]";
+			break;
+		default:
+			AZHAL_LOG_CRITICAL( "Invalid vk::DebugUtilsMessageTypeFlagBitsEXT flag bit: {0}", static_cast< Uint32 >( message_type ) );
+			AZHAL_DEBUG_BREAK();
+			break;
+		}
+
 		switch( message_severity )
 		{
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
-			AZHAL_LOG_TRACE( "{0}", pCallbackData->pMessage );
+			AZHAL_LOG_TRACE( "{0} {1}", message_type_name, pCallbackData->pMessage );
 			break;
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
-			AZHAL_LOG_INFO( "{0}", pCallbackData->pMessage );
+			AZHAL_LOG_INFO( "{0} {1}", message_type_name, pCallbackData->pMessage );
 			break;
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
-			AZHAL_LOG_WARN( "{0}", pCallbackData->pMessage );
+			AZHAL_LOG_WARN( "{0} {1}", message_type_name, pCallbackData->pMessage );
 			break;
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
-			AZHAL_LOG_ERROR( "{0}", pCallbackData->pMessage );
+			AZHAL_LOG_ERROR( "{0} {1}", message_type_name, pCallbackData->pMessage );
 			break;
 		default:
+			AZHAL_LOG_CRITICAL( "Invalid vk::DebugUtilsMessageSeverityFlagBitsEXT flag bit: {0}", static_cast< Uint32 >( message_severity ) );
 			AZHAL_DEBUG_BREAK();
 			break;
 		}
