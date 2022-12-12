@@ -1,5 +1,7 @@
 #pragma once
 
+#define TO_STRING(x) #x
+
 #define AZHAL_INLINE __inline
 #define AZHAL_FORCE_INLINE __forceinline
 #define AZHAL_DEBUG_BREAK __debugbreak
