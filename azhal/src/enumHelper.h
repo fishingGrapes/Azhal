@@ -61,7 +61,7 @@ namespace azhal
 }
 
 // Note: As a rule of thumb, use EnumToString directly for values known at compile-time 
-#define	IMPLEMENT_FORMATTER_FOR_ENUM(ENUM_TYPE)                                        \
+#define IMPLEMENT_FORMATTER_FOR_ENUM(ENUM_TYPE)                                        \
 template<>                                                                             \
 struct fmt::formatter<ENUM_TYPE> : formatter<std::string_view>                         \
 {                                                                                      \
