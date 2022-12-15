@@ -38,6 +38,7 @@ bin/
 .vscode/
 common/external/cloc/
 JSON/
+logs/
 
 # Files
 *.user

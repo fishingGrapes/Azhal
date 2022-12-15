@@ -2,6 +2,7 @@
 #include "window.h"
 #include "renderer.h"
 #include "vulkanHelper.h"
+#include "enums.h"
 
 #include <GLFW/glfw3.h>
 
@@ -18,11 +19,7 @@ namespace azhal
 
 	Renderer::~Renderer()
 	{
-#ifdef AZHAL_ENABLE_LOGGING
-		m_instance.destroyDebugUtilsMessengerEXT( m_debugMessenger, VK_NULL_HANDLE, m_DynamicDispatchInstance );
-#endif
-		m_instance.destroy();
-		AZHAL_LOG_INFO( "vulkan instance destroyed" );
+		Destroy();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,12 +49,22 @@ namespace azhal
 		};
 
 #ifdef AZHAL_ENABLE_LOGGING
+		const std::vector<vk::ValidationFeatureEnableEXT>& enabled_validation_features = GetEnabledValidationFeatures();
+		const vk::ValidationFeaturesEXT validation_features_info
+		{
+			.enabledValidationFeatureCount = VK_SIZE_CAST( enabled_validation_features.size() ),
+			.pEnabledValidationFeatures = enabled_validation_features.data(),
+			.disabledValidationFeatureCount = 0,
+			.pDisabledValidationFeatures = VK_NULL_HANDLE
+		};
+
 		const vk::DebugUtilsMessengerCreateInfoEXT& debug_utils_create_info =
 			GetDebugUtilsMessengerCreateInfo( reinterpret_cast< PFN_vkDebugUtilsMessengerCallbackEXT >( DebugCallback ) );
 
-		const vk::StructureChain<vk::InstanceCreateInfo, vk::DebugUtilsMessengerCreateInfoEXT> instance_create_chain
+		const vk::StructureChain<vk::InstanceCreateInfo, vk::ValidationFeaturesEXT, vk::DebugUtilsMessengerCreateInfoEXT> instance_create_chain
 		{
 			instance_create_info,
+			validation_features_info,
 			debug_utils_create_info
 		};
 #else 
@@ -77,8 +84,83 @@ namespace azhal
 
 	void Renderer::CreateDevice()
 	{
-		vk::PhysicalDevice physical_device = GetSuitablePhysicalDevice();
+		const vk::PhysicalDevice physical_device = GetSuitablePhysicalDevice();
+
+		const auto find_queue_family_fn = [&physical_device]( vk::QueueFlagBits queue_flag, Bool is_present_queue = false )  -> QueueFamily
+		{
+			const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
+			for( Uint32 i = 0; i < queue_family_props.size(); ++i )
+			{
+				if( is_present_queue )
+				{
+					// TODO: add code for present queue selection
+					//physical_device.getSurfaceSupportKHR()
+				}
+
+				if( queue_family_props[ i ].queueFlags & queue_flag )
+				{
+					return i;
+				}
+			}
+
+			AZHAL_LOG_ALWAYS_ENABLED( "Failed to find an appropriate queue family for the given queue flag, {0}", queue_flag );
+			throw AzhalException( "Failed to create queue family" );
+		};
+
+		const QueueFamily graphics_queue_family = find_queue_family_fn( vk::QueueFlagBits::eGraphics );
+		const QueueFamily compute_queue_family = find_queue_family_fn( vk::QueueFlagBits::eCompute );
+		const QueueFamily transfer_queue_family = find_queue_family_fn( vk::QueueFlagBits::eTransfer );
+
+		const std::set<QueueFamily> unique_queue_families
+		{
+			graphics_queue_family,
+			compute_queue_family,
+			transfer_queue_family
+		};
+
+		std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
+		for( QueueFamily queue_family : unique_queue_families )
+		{
+			// TODO: queue_priority
+			static const Float QUEUE_PRIORITY = 1.0f;
+			const vk::DeviceQueueCreateInfo queue_create_info
+			{
+				.queueFamilyIndex = queue_family,
+				.queueCount = 1,
+				.pQueuePriorities = &QUEUE_PRIORITY
+			};
+			queue_create_infos.emplace_back( queue_create_info );
+		}
+
+		vk::DeviceCreateInfo device_create_info
+		{
+			.queueCreateInfoCount = VK_SIZE_CAST( queue_create_infos.size() ),
+			.pQueueCreateInfos = queue_create_infos.data(),
+			// TODO: add enabled features
+			.pEnabledFeatures = VK_NULL_HANDLE
+		};
+
+		vk::ResultValue device_rv = physical_device.createDevice( device_create_info );
+		m_device = CheckVkResultValue( device_rv, "Failed to create vulkan device" );
+
+		m_graphicsQueue = GpuQueue( m_device.getQueue( graphics_queue_family, 0 ), graphics_queue_family );
+		m_computeQueue = GpuQueue( m_device.getQueue( compute_queue_family, 0 ), compute_queue_family );
+		m_transferQueue = GpuQueue( m_device.getQueue( transfer_queue_family, 0 ), transfer_queue_family );
 	}
+
+	void Renderer::Destroy()
+	{
+		m_device.destroy();
+		AZHAL_LOG_INFO( "vulkan device destroyed" );
+
+#ifdef AZHAL_ENABLE_LOGGING
+		m_instance.destroyDebugUtilsMessengerEXT( m_debugMessenger, VK_NULL_HANDLE, m_DynamicDispatchInstance );
+#endif
+		m_instance.destroy();
+		AZHAL_LOG_INFO( "vulkan instance destroyed" );
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	std::vector<const char*> Renderer::GetRequiredExtensions() const
 	{
@@ -99,9 +181,28 @@ namespace azhal
 		std::vector<const char*> validation_layers;
 
 		if( m_validationLayersEnabled )
-			validation_layers.push_back( "VK_LAYER_KHRONOS_validation" );
+			validation_layers.push_back( VK_LAYER_KHRONOS_VALIDATION_NAME );
 
 		return validation_layers;
+	}
+
+	std::vector<vk::ValidationFeatureEnableEXT> Renderer::GetEnabledValidationFeatures() const
+	{
+		if( !m_gpuAssistedValidationEnabled )
+			return std::vector<vk::ValidationFeatureEnableEXT>();
+
+
+		using enum vk::ValidationFeatureEnableEXT;
+		std::vector<vk::ValidationFeatureEnableEXT> validation_features
+		{
+			eGpuAssisted,
+			eBestPractices,
+			// Enabling both eGpuAssited and eDebugPrintf would result in a validation error
+			//eDebugPrintf,
+			eSynchronizationValidation
+		};
+
+		return validation_features;
 	}
 
 	vk::PhysicalDevice Renderer::GetSuitablePhysicalDevice() const
@@ -110,8 +211,10 @@ namespace azhal
 		const std::vector<vk::PhysicalDevice>& physical_devices = CheckVkResultValue( physical_devices_rv, "failed to enumerate physical devices" );
 
 		// TODO: check for appropriate physical device props
+		const vk::PhysicalDevice selected_physical_device = physical_devices[ 0 ];
+		const vk::PhysicalDeviceProperties& physical_device_props = selected_physical_device.getProperties();
 
-		return physical_devices[ 0 ];
+		return selected_physical_device;
 	}
 
 	vk::DebugUtilsMessengerCreateInfoEXT Renderer::GetDebugUtilsMessengerCreateInfo( const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn ) const
@@ -166,7 +269,7 @@ namespace azhal
 			message_type_name = "[vk_deviceAddressBinding]";
 			break;
 		default:
-			AZHAL_LOG_CRITICAL( "Invalid vk::DebugUtilsMessageTypeFlagBitsEXT flag bit: {0}", static_cast< Uint32 >( message_type ) );
+			AZHAL_LOG_CRITICAL( "Invalid vk::DebugUtilsMessageTypeFlagBitsEXT flag bit: {0}", message_type );
 			AZHAL_DEBUG_BREAK();
 			break;
 		}
@@ -186,7 +289,7 @@ namespace azhal
 			AZHAL_LOG_ERROR( "{0} {1}", message_type_name, pCallbackData->pMessage );
 			break;
 		default:
-			AZHAL_LOG_CRITICAL( "Invalid vk::DebugUtilsMessageSeverityFlagBitsEXT flag bit: {0}", static_cast< Uint32 >( message_severity ) );
+			AZHAL_LOG_CRITICAL( "Invalid vk::DebugUtilsMessageSeverityFlagBitsEXT flag bit: {0}", message_severity );
 			AZHAL_DEBUG_BREAK();
 			break;
 		}

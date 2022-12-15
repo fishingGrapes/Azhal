@@ -7,3 +7,4 @@
 #include "../src/azhalTypes.h"
 #include "../src/assert.h"
 #include "../src/log.h"
+#include "../src/exception.h"

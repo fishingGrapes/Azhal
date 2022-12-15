@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
+#include "gpuQueue.h"
 
 namespace azhal
 {
@@ -29,9 +30,11 @@ namespace azhal
 	private:
 		void CreateInstance();
 		void CreateDevice();
+		void Destroy();
 
 		std::vector<const char*> GetRequiredExtensions() const;
 		std::vector<const char*> GetValidationLayers() const;
+		std::vector<vk::ValidationFeatureEnableEXT> GetEnabledValidationFeatures() const;
 		vk::PhysicalDevice GetSuitablePhysicalDevice() const;
 		vk::DebugUtilsMessengerCreateInfoEXT GetDebugUtilsMessengerCreateInfo( const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn ) const;
 
@@ -43,6 +46,12 @@ namespace azhal
 		vk::Instance m_instance;
 		vk::DispatchLoaderDynamic m_DynamicDispatchInstance;
 		vk::DebugUtilsMessengerEXT m_debugMessenger;
+
+		vk::Device m_device;
+
+		GpuQueue m_graphicsQueue;
+		GpuQueue m_computeQueue;
+		GpuQueue m_transferQueue;
 	};
 
 	using RendererPtr = std::unique_ptr<Renderer>;

@@ -1,7 +1,10 @@
 #pragma once
 
+#define  VK_LAYER_KHRONOS_VALIDATION_NAME "VK_LAYER_KHRONOS_validation"
+
 namespace azhal
 {
+
 	template <typename T>
 	AZHAL_INLINE T CheckVkResultValue( const vk::ResultValue<T>& res_val, const char* fail_msg )
 	{
@@ -25,4 +28,5 @@ namespace azhal
 
 		return res_val.value;
 	}
+
 }

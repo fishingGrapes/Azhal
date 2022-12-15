@@ -1,7 +1,7 @@
 #pragma once
 
-#include "spdlog/logger.h"
-#include "spdlog/fmt/ostr.h"
+#include <spdlog/async_logger.h>
+#include <spdlog/fmt/ostr.h>
 
 #include "azhalKeywords.h"
 
@@ -9,15 +9,15 @@ class AzhalLogger
 {
 public:
 	AzhalLogger() = delete;
-	static void Init( const char* loggerName );
+	static void Init( const char* loggerName, const char* output_path = "logs" );
 
-	AZHAL_INLINE static std::shared_ptr<spdlog::logger> Get()
+	AZHAL_INLINE static std::shared_ptr<spdlog::async_logger> Get()
 	{
 		return s_logger;
 	};
 
 private:
-	static std::shared_ptr<spdlog::logger> s_logger;
+	static std::shared_ptr<spdlog::async_logger> s_logger;
 };
 
 
@@ -38,3 +38,5 @@ private:
 #define AZHAL_LOG_CRITICAL(...)   
 
 #endif
+
+#define AZHAL_LOG_ALWAYS_ENABLED(...)   AzhalLogger::Get()->critical(__VA_ARGS__)
