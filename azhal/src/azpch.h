@@ -5,5 +5,5 @@
 #include <string_view>
 #include <set>
 
-#include "azhalCommon.h"
+#include "common.h"
 #include <vulkan/vulkan.hpp>

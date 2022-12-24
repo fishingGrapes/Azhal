@@ -28,12 +28,12 @@ void AzhalLogger::Init( const char* loggerName, const char* output_path )
 	localtime_s( &current_time, &timer );
 
 	std::stringstream time_string_stream;
-	time_string_stream << "..\\..\\..\\" << output_path << '\\' << loggerName << std::put_time( &current_time, "_%Y-%m-%d_%H%M%S.log" );
+	time_string_stream << "..\\..\\..\\" << output_path << '\\' << loggerName << std::put_time( &current_time, "_%Y%m%d_%H%M%S.log" );
 
 	const auto rotating_file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>( time_string_stream.str(), MAX_FILE_SIZE, MAX_FILE_COUNT );
-	rotating_file_sink->set_pattern( "%^[%T] %n %v%$" );
+	rotating_file_sink->set_pattern( "%^[%T] %v%$" );
 	const auto stdout_color_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-	stdout_color_sink->set_pattern( "%^[%T] %n %v%$" );	
+	stdout_color_sink->set_pattern( "%^[%T] %v%$" );	
 
 	std::vector<spdlog::sink_ptr> sinks { stdout_color_sink, rotating_file_sink };
 #ifdef AZHAL_PLATFORM_WINDOWS

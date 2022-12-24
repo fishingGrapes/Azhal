@@ -32,8 +32,8 @@ namespace azhal
 		void CreateDevice();
 		void Destroy();
 
-		std::vector<const char*> GetRequiredExtensions() const;
-		std::vector<const char*> GetValidationLayers() const;
+		std::vector<const AnsiChar*> GetRequiredExtensions() const;
+		std::vector<const AnsiChar*> GetValidationLayers() const;
 		std::vector<vk::ValidationFeatureEnableEXT> GetEnabledValidationFeatures() const;
 		vk::PhysicalDevice GetSuitablePhysicalDevice() const;
 		vk::DebugUtilsMessengerCreateInfoEXT GetDebugUtilsMessengerCreateInfo( const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn ) const;

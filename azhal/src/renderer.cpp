@@ -35,8 +35,8 @@ namespace azhal
 			.apiVersion = VK_API_VERSION_1_3
 		};
 
-		const std::vector<const char*>& validation_layers = GetValidationLayers();
-		const std::vector<const char*>& required_extensions = GetRequiredExtensions();
+		const std::vector<const AnsiChar*>& validation_layers = GetValidationLayers();
+		const std::vector<const AnsiChar*>& required_extensions = GetRequiredExtensions();
 
 		vk::InstanceCreateInfo instance_create_info
 		{
@@ -162,12 +162,12 @@ namespace azhal
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	std::vector<const char*> Renderer::GetRequiredExtensions() const
+	std::vector<const AnsiChar*> Renderer::GetRequiredExtensions() const
 	{
 		Uint32 glfw_extension_count = 0;
-		const char** ppGlfwExtensions = glfwGetRequiredInstanceExtensions( &glfw_extension_count );
+		const AnsiChar** ppGlfwExtensions = glfwGetRequiredInstanceExtensions( &glfw_extension_count );
 
-		std::vector<const char*> glfw_extensions( ppGlfwExtensions, ppGlfwExtensions + glfw_extension_count );
+		std::vector<const AnsiChar*> glfw_extensions( ppGlfwExtensions, ppGlfwExtensions + glfw_extension_count );
 
 #ifdef AZHAL_ENABLE_LOGGING
 		glfw_extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
@@ -176,9 +176,9 @@ namespace azhal
 		return glfw_extensions;
 	}
 
-	std::vector<const char*> Renderer::GetValidationLayers() const
+	std::vector<const AnsiChar*> Renderer::GetValidationLayers() const
 	{
-		std::vector<const char*> validation_layers;
+		std::vector<const AnsiChar*> validation_layers;
 
 		if( m_validationLayersEnabled )
 			validation_layers.push_back( VK_LAYER_KHRONOS_VALIDATION_NAME );

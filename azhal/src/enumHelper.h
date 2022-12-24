@@ -3,7 +3,7 @@
 
 namespace azhal
 {
-	constexpr const char* EnumToString( vk::DebugUtilsMessageTypeFlagBitsEXT enum_val )
+	constexpr const AnsiChar* EnumToString( vk::DebugUtilsMessageTypeFlagBitsEXT enum_val )
 	{
 		switch( enum_val )
 		{
@@ -20,7 +20,7 @@ namespace azhal
 		}
 	}
 
-	constexpr const char* EnumToString( vk::DebugUtilsMessageSeverityFlagBitsEXT enum_val )
+	constexpr const AnsiChar* EnumToString( vk::DebugUtilsMessageSeverityFlagBitsEXT enum_val )
 	{
 		switch( enum_val )
 		{
@@ -37,7 +37,7 @@ namespace azhal
 		}
 	}
 
-	constexpr const char* EnumToString( vk::QueueFlagBits enum_val )
+	constexpr const AnsiChar* EnumToString( vk::QueueFlagBits enum_val )
 	{
 		switch( enum_val )
 		{

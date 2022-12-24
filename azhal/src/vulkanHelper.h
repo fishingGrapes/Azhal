@@ -6,7 +6,7 @@ namespace azhal
 {
 
 	template <typename T>
-	AZHAL_INLINE T CheckVkResultValue( const vk::ResultValue<T>& res_val, const char* fail_msg )
+	AZHAL_INLINE T CheckVkResultValue( const vk::ResultValue<T>& res_val, const AnsiChar* fail_msg )
 	{
 		if( res_val.result != vk::Result::eSuccess )
 		{
@@ -18,7 +18,7 @@ namespace azhal
 	}
 
 	template <typename T>
-	AZHAL_INLINE T CheckVkResultValue( const vk::ResultValue<T>& res_val, const char* fail_msg, std::initializer_list<vk::Result> successCodes )
+	AZHAL_INLINE T CheckVkResultValue( const vk::ResultValue<T>& res_val, const AnsiChar* fail_msg, std::initializer_list<vk::Result> successCodes )
 	{
 		if( std::find( successCodes.begin(), successCodes.end(), res_val.result ) != successCodes.end() )
 		{

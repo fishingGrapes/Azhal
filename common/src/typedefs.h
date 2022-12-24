@@ -20,6 +20,7 @@ using Uint32 = uint32_t;
 using Uint64 = uint64_t;
 
 // signed char
+using AnsiChar = char;
 using Char16 = char16_t;
 using Char32 = char32_t;
 

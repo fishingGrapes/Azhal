@@ -3,7 +3,7 @@
 #include <spdlog/async_logger.h>
 #include <spdlog/fmt/ostr.h>
 
-#include "azhalKeywords.h"
+#include "macros.h"
 
 class AzhalLogger
 {

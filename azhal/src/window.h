@@ -7,7 +7,7 @@ namespace azhal
 	class Window
 	{
 	public:
-		explicit Window( const char* name, Uint32 width, Uint32 height );
+		explicit Window( const AnsiChar* name, Uint32 width, Uint32 height );
 		~Window();
 
 		Window() = delete;

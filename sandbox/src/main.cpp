@@ -1,12 +1,12 @@
-#include "azhalCommon.h"
+#include "common.h"
 #include "azhalRenderer.h"
 
 Int32 main( int argc, char** argv )
 {
 	using namespace azhal;
 
-	AzhalLogger::Init( "Azhal" );
-	AZHAL_LOG_INFO( "Initialized logger.." );
+	AzhalLogger::Init( "azhal" );
+	AZHAL_LOG_INFO( "initialized logger.." );
 
 	cxxopts::Options cmd_line_options( "Azhal", "A vulkan renderer" );
 	cmd_line_options.add_options()

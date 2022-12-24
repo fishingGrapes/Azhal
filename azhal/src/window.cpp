@@ -5,7 +5,7 @@
 
 namespace azhal
 {
-	Window::Window( const char* name, Uint32 width, Uint32 height )
+	Window::Window( const AnsiChar* name, Uint32 width, Uint32 height )
 		: m_pWindow( nullptr )
 		, m_name( name )
 		, m_width( width )
