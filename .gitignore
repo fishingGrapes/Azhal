@@ -39,6 +39,7 @@ bin/
 common/external/cloc/
 JSON/
 logs/
+tools/tracy_profiler/
 
 # Files
 *.user

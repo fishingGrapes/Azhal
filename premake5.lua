@@ -23,12 +23,14 @@ IncludePaths["glfw"] = "external/glfw/include"
 IncludePaths["glm"] = "external/glm"
 IncludePaths["imgui"] = "external/imgui"
 IncludePaths["spdlog"] = "external/spdlog/include"
+IncludePaths["tracy"] = "external/tracy/public/tracy"
 IncludePaths["common"] = "common/include"
 IncludePaths["azhal"] = "azhal/include"
 
 group "Dependencies"
 	include ("external/glfw")
 	include ("external/imgui")
+	include ("external/tracy")
 group ""
 
 project "common"
@@ -118,6 +120,7 @@ project "azhal"
 		"%{IncludePaths.glm}",
 		"%{IncludePaths.imgui}",
 		"%{IncludePaths.spdlog}",
+		"%{IncludePaths.tracy}",
 		"%{IncludePaths.common}",
 		"$(VULKAN_SDK)/Include"
 	}
@@ -139,7 +142,8 @@ project "azhal"
 		"common",
 		"vulkan-1.lib",
 		"glfw",
-		"imgui"
+		"imgui", 
+		"tracy"
 	}
 	
 	defines
@@ -165,7 +169,8 @@ project "azhal"
 		defines
 		{ 
 			"AZHAL_DEBUG",
-			"AZHAL_ENABLE_LOGGING"
+			"AZHAL_ENABLE_LOGGING",
+			"TRACY_ENABLE"
 		}			
 		
 	filter "configurations:Release"
@@ -175,7 +180,8 @@ project "azhal"
 		defines
 		{ 
 			"AZHAL_RELEASE",
-			"AZHAL_ENABLE_LOGGING"
+			"AZHAL_ENABLE_LOGGING",
+			"TRACY_ENABLE"
 		}
 	
 	filter "configurations:Final"
