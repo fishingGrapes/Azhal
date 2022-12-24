@@ -19,7 +19,6 @@ std::shared_ptr<spdlog::async_logger> AzhalLogger::s_logger;
 
 void AzhalLogger::Init( const char* loggerName, const char* output_path )
 {
-	spdlog::set_pattern( "%^[%T] %n: %v%$" );
 	spdlog::init_thread_pool( 8192, 1 );
 
 	// local time and date 
@@ -32,9 +31,11 @@ void AzhalLogger::Init( const char* loggerName, const char* output_path )
 	time_string_stream << "..\\..\\..\\" << output_path << '\\' << loggerName << std::put_time( &current_time, "_%Y-%m-%d_%H%M%S.log" );
 
 	const auto rotating_file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>( time_string_stream.str(), MAX_FILE_SIZE, MAX_FILE_COUNT );
+	rotating_file_sink->set_pattern( "%^[%T] %n %v%$" );
 	const auto stdout_color_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-	std::vector<spdlog::sink_ptr> sinks { stdout_color_sink, rotating_file_sink };
+	stdout_color_sink->set_pattern( "%^[%T] %n %v%$" );	
 
+	std::vector<spdlog::sink_ptr> sinks { stdout_color_sink, rotating_file_sink };
 #ifdef AZHAL_PLATFORM_WINDOWS
 	sinks.push_back( std::make_shared<spdlog::sinks::msvc_sink_mt>() );
 #endif

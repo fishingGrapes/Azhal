@@ -47,6 +47,7 @@ project "common"
 	{
 		"%{IncludePaths.cxxopts}",
 		"%{IncludePaths.glm}",
+		"%{IncludePaths.tracy}",
 		"%{IncludePaths.spdlog}"
 	}
 	
@@ -55,6 +56,11 @@ project "common"
 		"%{prj.name}/include/**.h",
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp"
+	}
+	
+	links
+	{
+		"tracy"
 	}
 	
 	defines
@@ -75,7 +81,8 @@ project "common"
 		{ 
 			"AZHAL_DEBUG", 
 			"AZHAL_ENABLE_LOGGING",
-			"AZHAL_ENABLE_ASSERTS"
+			"AZHAL_ENABLE_ASSERTS",
+			"TRACY_ENABLE"
 		}			
 		
 	filter "configurations:Release"
@@ -86,7 +93,8 @@ project "common"
 		{ 
 			"AZHAL_RELEASE",
 			"AZHAL_ENABLE_LOGGING",
-			"AZHAL_ENABLE_ASSERTS"
+			"AZHAL_ENABLE_ASSERTS",
+			"TRACY_ENABLE"
 		}
 	
 	filter "configurations:Final"
@@ -119,8 +127,8 @@ project "azhal"
 		"%{IncludePaths.glfw}",
 		"%{IncludePaths.glm}",
 		"%{IncludePaths.imgui}",
-		"%{IncludePaths.spdlog}",
 		"%{IncludePaths.tracy}",
+		"%{IncludePaths.spdlog}",
 		"%{IncludePaths.common}",
 		"$(VULKAN_SDK)/Include"
 	}
@@ -142,8 +150,7 @@ project "azhal"
 		"common",
 		"vulkan-1.lib",
 		"glfw",
-		"imgui", 
-		"tracy"
+		"imgui"
 	}
 	
 	defines
@@ -217,6 +224,7 @@ project "sandbox"
 		"%{IncludePaths.cxxopts}",
 		"%{IncludePaths.glm}",
 		"%{IncludePaths.spdlog}",
+		"%{IncludePaths.tracy}",
 		"%{IncludePaths.common}",
 		"%{IncludePaths.azhal}",
 		"$(VULKAN_SDK)/Include"
@@ -244,7 +252,8 @@ project "sandbox"
 		defines
 		{ 
 			"AZHAL_DEBUG",
-			"AZHAL_ENABLE_LOGGING"
+			"AZHAL_ENABLE_LOGGING",
+			"TRACY_ENABLE"
 		}			
 		
 	filter "configurations:Release"
@@ -254,7 +263,8 @@ project "sandbox"
 		defines
 		{ 
 			"AZHAL_RELEASE",
-			"AZHAL_ENABLE_LOGGING"
+			"AZHAL_ENABLE_LOGGING",
+			"TRACY_ENABLE"
 		}
 	
 	filter "configurations:Final"
