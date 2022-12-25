@@ -14,6 +14,12 @@ namespace azhal
 		Window( const Window& ) = delete;
 
 		Bool Poll() const;
+
+		AZHAL_INLINE void* Get() const
+		{
+			return static_cast< void* >( m_pWindow );
+		}
+
 	private:
 		GLFWwindow* m_pWindow;
 

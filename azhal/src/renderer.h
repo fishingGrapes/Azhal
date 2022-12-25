@@ -30,13 +30,21 @@ namespace azhal
 	private:
 		void CreateInstance();
 		void CreateDevice();
+		void CreateSurface( const WindowPtr& pWindow );
 		void Destroy();
 
-		std::vector<const AnsiChar*> GetRequiredExtensions() const;
+		[[nodiscard( "azhal::Renderer::GetRequiredInstanceExtensions" )]]
+		std::vector<const AnsiChar*> GetRequiredInstanceExtensions() const;
+		[[nodiscard( "azhal::Renderer::GetValidationLayers" )]]
 		std::vector<const AnsiChar*> GetValidationLayers() const;
+		[[nodiscard( "azhal::Renderer::GetEnabledValidationFeatures" )]]
 		std::vector<vk::ValidationFeatureEnableEXT> GetEnabledValidationFeatures() const;
+		[[nodiscard( "azhal::Renderer::GetSuitablePhysicalDevice" )]]
 		vk::PhysicalDevice GetSuitablePhysicalDevice() const;
+		[[nodiscard( "azhal::Renderer::GetDebugUtilsMessengerCreateInfo" )]]
 		vk::DebugUtilsMessengerCreateInfoEXT GetDebugUtilsMessengerCreateInfo( const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn ) const;
+		[[nodiscard( "azhal::Renderer::GetRequiredDeviceExtensions" )]]
+		std::vector<const AnsiChar*> GetRequiredDeviceExtensions() const;
 
 	private:
 		Bool m_validationLayersEnabled;
@@ -52,6 +60,10 @@ namespace azhal
 		GpuQueue m_graphicsQueue;
 		GpuQueue m_computeQueue;
 		GpuQueue m_transferQueue;
+		GpuQueue m_presentQueue;
+
+		vk::SurfaceKHR m_surface;
+
 	};
 
 	using RendererPtr = std::unique_ptr<Renderer>;

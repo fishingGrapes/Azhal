@@ -19,3 +19,5 @@ do                                                                              
 #define AZHAL_NULL_CHECK(ptr, msg)
 
 #endif
+
+#define AZHAL_FATAL_ASSERT(eval, msg) assert(((void)msg, eval))

@@ -184,7 +184,10 @@ project "azhal"
 	filter "system:windows"
 			systemversion "latest"
 			buildoptions { "/Zc:__cplusplus" }
-			defines { "AZHAL_PLATFORM_WINDOWS" }
+			defines 
+			{ 
+				"AZHAL_PLATFORM_WINDOWS"
+			}
 
 	filter "configurations:Debug"
 		runtime "Debug"
@@ -271,7 +274,10 @@ project "sandbox"
 	filter "system:windows"
 			systemversion "latest"
 			buildoptions { "/Zc:__cplusplus" }
-			defines { "AZHAL_PLATFORM_WINDOWS" }
+			defines 
+			{
+				"AZHAL_PLATFORM_WINDOWS"
+			}
 			
 	filter "configurations:Debug"
 		runtime "Debug"

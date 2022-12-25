@@ -14,6 +14,7 @@ namespace azhal
 		, m_debugMessageSeverity( renderer_create_info.DebugMessageSeverity )
 	{
 		CreateInstance();
+		CreateSurface( renderer_create_info.pWindow );
 		CreateDevice();
 	}
 
@@ -36,7 +37,7 @@ namespace azhal
 		};
 
 		const std::vector<const AnsiChar*>& validation_layers = GetValidationLayers();
-		const std::vector<const AnsiChar*>& required_extensions = GetRequiredExtensions();
+		const std::vector<const AnsiChar*>& required_extensions = GetRequiredInstanceExtensions();
 
 		vk::InstanceCreateInfo instance_create_info
 		{
@@ -73,6 +74,7 @@ namespace azhal
 
 		vk::ResultValue instance_create_rv = vk::createInstance( instance_create_chain.get<vk::InstanceCreateInfo>() );
 		m_instance = CheckVkResultValue( instance_create_rv, "failed to create instance" );
+		AZHAL_LOG_WARN( "vulkan instance created" );
 
 		m_DynamicDispatchInstance = vk::DispatchLoaderDynamic( m_instance, vkGetInstanceProcAddr );
 
@@ -84,6 +86,7 @@ namespace azhal
 
 	void Renderer::CreateDevice()
 	{
+		const std::vector<const AnsiChar*> required_extensions = GetRequiredDeviceExtensions();
 		const vk::PhysicalDevice physical_device = GetSuitablePhysicalDevice();
 
 		const auto find_queue_family_fn = [&physical_device]( vk::QueueFlagBits queue_flag, Bool is_present_queue = false )  -> QueueFamily
@@ -91,12 +94,6 @@ namespace azhal
 			const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
 			for( Uint32 i = 0; i < queue_family_props.size(); ++i )
 			{
-				if( is_present_queue )
-				{
-					// TODO: add code for present queue selection
-					//physical_device.getSurfaceSupportKHR()
-				}
-
 				if( queue_family_props[ i ].queueFlags & queue_flag )
 				{
 					return i;
@@ -104,18 +101,36 @@ namespace azhal
 			}
 
 			AZHAL_LOG_ALWAYS_ENABLED( "Failed to find an appropriate queue family for the given queue flag, {0}", queue_flag );
-			throw AzhalException( "Failed to create queue family" );
+			throw AzhalException( "Failed to find queue family" );
+		};
+
+		const auto find_present_queue_family_fn = [&physical_device, this]()  -> QueueFamily
+		{
+			const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
+			for( Uint32 i = 0; i < queue_family_props.size(); ++i )
+			{
+				const vk::ResultValue surface_support_rv = physical_device.getSurfaceSupportKHR( i, m_surface, m_DynamicDispatchInstance );
+				if( surface_support_rv.result == vk::Result::eSuccess )
+				{
+					return surface_support_rv.value;
+				}
+			}
+
+			AZHAL_LOG_ALWAYS_ENABLED( "Failed to find  present queue family for the given queue flag" );
+			throw AzhalException( "Failed to find present queue family" );
 		};
 
 		const QueueFamily graphics_queue_family = find_queue_family_fn( vk::QueueFlagBits::eGraphics );
 		const QueueFamily compute_queue_family = find_queue_family_fn( vk::QueueFlagBits::eCompute );
 		const QueueFamily transfer_queue_family = find_queue_family_fn( vk::QueueFlagBits::eTransfer );
+		const QueueFamily present_queue_family = find_present_queue_family_fn();
 
 		const std::set<QueueFamily> unique_queue_families
 		{
 			graphics_queue_family,
 			compute_queue_family,
-			transfer_queue_family
+			transfer_queue_family,
+			present_queue_family
 		};
 
 		std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
@@ -136,44 +151,62 @@ namespace azhal
 		{
 			.queueCreateInfoCount = VK_SIZE_CAST( queue_create_infos.size() ),
 			.pQueueCreateInfos = queue_create_infos.data(),
+			.enabledExtensionCount = VK_SIZE_CAST( required_extensions.size() ),
+			.ppEnabledExtensionNames = required_extensions.data(),
 			// TODO: add enabled features
 			.pEnabledFeatures = VK_NULL_HANDLE
 		};
 
 		vk::ResultValue device_rv = physical_device.createDevice( device_create_info );
 		m_device = CheckVkResultValue( device_rv, "Failed to create vulkan device" );
+		AZHAL_LOG_WARN( "vulkan device created" );
 
 		m_graphicsQueue = GpuQueue( m_device.getQueue( graphics_queue_family, 0 ), graphics_queue_family );
 		m_computeQueue = GpuQueue( m_device.getQueue( compute_queue_family, 0 ), compute_queue_family );
 		m_transferQueue = GpuQueue( m_device.getQueue( transfer_queue_family, 0 ), transfer_queue_family );
+		m_presentQueue = GpuQueue( m_device.getQueue( present_queue_family, 0 ), present_queue_family );
+	}
+
+	void Renderer::CreateSurface( const WindowPtr& pWindow )
+	{
+		VkSurfaceKHR surface;
+
+		VkResult result = glfwCreateWindowSurface( m_instance, static_cast< GLFWwindow* >( pWindow->Get() ), VK_NULL_HANDLE, &surface );
+		AZHAL_FATAL_ASSERT( result == VkResult::VK_SUCCESS, "failed to create window surface" );
+		AZHAL_LOG_WARN( "vulkan surface created" );
+
+		m_surface = surface;
 	}
 
 	void Renderer::Destroy()
 	{
 		m_device.destroy();
-		AZHAL_LOG_INFO( "vulkan device destroyed" );
+		AZHAL_LOG_WARN( "vulkan device destroyed" );
+
+		m_instance.destroy( m_surface );
+		AZHAL_LOG_WARN( "vulkan surface destroyed" );
 
 #ifdef AZHAL_ENABLE_LOGGING
 		m_instance.destroyDebugUtilsMessengerEXT( m_debugMessenger, VK_NULL_HANDLE, m_DynamicDispatchInstance );
 #endif
 		m_instance.destroy();
-		AZHAL_LOG_INFO( "vulkan instance destroyed" );
+		AZHAL_LOG_WARN( "vulkan instance destroyed" );
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	std::vector<const AnsiChar*> Renderer::GetRequiredExtensions() const
+	std::vector<const AnsiChar*> Renderer::GetRequiredInstanceExtensions() const
 	{
 		Uint32 glfw_extension_count = 0;
 		const AnsiChar** ppGlfwExtensions = glfwGetRequiredInstanceExtensions( &glfw_extension_count );
 
-		std::vector<const AnsiChar*> glfw_extensions( ppGlfwExtensions, ppGlfwExtensions + glfw_extension_count );
+		std::vector<const AnsiChar*> required_instance_extensions( ppGlfwExtensions, ppGlfwExtensions + glfw_extension_count );
 
 #ifdef AZHAL_ENABLE_LOGGING
-		glfw_extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
+		required_instance_extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 #endif
 
-		return glfw_extensions;
+		return required_instance_extensions;
 	}
 
 	std::vector<const AnsiChar*> Renderer::GetValidationLayers() const
@@ -246,6 +279,16 @@ namespace azhal
 		};
 
 		return debug_msg_create_info;
+	}
+
+	std::vector<const AnsiChar*> Renderer::GetRequiredDeviceExtensions() const
+	{
+		const std::vector<const AnsiChar*> required_device_extensions
+		{
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		};
+
+		return required_device_extensions;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////

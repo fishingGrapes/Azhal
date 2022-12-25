@@ -12,10 +12,14 @@ namespace azhal
 		, m_height( height )
 	{
 		Int32 result = glfwInit();
-		AZHAL_ASSERT( result, "Failed to initialize GLFW" );
+		AZHAL_FATAL_ASSERT( result, "Failed to initialize GLFW" );
+
+		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
+		// TODO: handle resizing
+		glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
 
 		m_pWindow = glfwCreateWindow( m_width, m_height, m_name.data(), nullptr, nullptr );
-		AZHAL_ASSERT( m_pWindow != nullptr, "Failed to create GLFWwindow" );
+		AZHAL_FATAL_ASSERT( m_pWindow != nullptr, "Failed to create GLFWwindow" );
 	}
 
 	Window::~Window()

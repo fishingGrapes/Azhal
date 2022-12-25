@@ -12,7 +12,7 @@ namespace azhal
 		{
 		}
 
-		explicit GpuQueue( vk::Queue queue, Uint32 queue_family )
+		GpuQueue( vk::Queue queue, Uint32 queue_family )
 			: m_queue( queue )
 			, m_family( queue_family )
 		{
