@@ -41,6 +41,11 @@ project "imgui"
 		runtime "Release"
 		symbols "on"
 		optimize "Debug"
+		
+	filter "configurations:Profile"
+		runtime "Release"
+		symbols "off"
+		optimize "Full"
 	
 	filter "configurations:Final"
 		runtime "Release"

@@ -5,11 +5,13 @@ workspace "azhal"
 	--Declare Configs
 	configurations 
 	{
-		--unoptimized, with logging
+		--unoptimized, with logging, with profiling
 		"Debug",
-		--optimized, with logging
+		--optimized, with logging, with profiling
 		"Release",
-		--fully optmized, without logging
+		--fully optmized, without logging, with profiling
+		"Profile",
+		--fully optmized, without logging, without profiling
 		"Final"
 	}
 
@@ -18,6 +20,7 @@ outputdir = "%{cfg.buildcfg}_%{cfg.architecture}"
 
 -- Include directories relative to root folder (solution directory)
 IncludePaths =  {}
+IncludePaths["vulkan"] = "$(VULKAN_SDK)/Include"
 IncludePaths["cxxopts"] = "external/cxxopts/include"
 IncludePaths["glfw"] = "external/glfw/include"
 IncludePaths["glm"] = "external/glm"
@@ -48,7 +51,8 @@ project "common"
 		"%{IncludePaths.cxxopts}",
 		"%{IncludePaths.glm}",
 		"%{IncludePaths.tracy}",
-		"%{IncludePaths.spdlog}"
+		"%{IncludePaths.spdlog}",
+		"%{IncludePaths.imgui}"
 	}
 	
 	files
@@ -96,12 +100,25 @@ project "common"
 			"AZHAL_ENABLE_ASSERTS",
 			"TRACY_ENABLE"
 		}
+		
+	filter "configurations:Profile"
+		runtime "Release"
+		symbols "off"
+		optimize "Full"
+		defines
+		{ 
+			"AZHAL_FINAL",
+			"TRACY_ENABLE"
+		}
 	
 	filter "configurations:Final"
 		runtime "Release"
 		symbols "off"
 		optimize "Full"
-		defines{ "AZHAL_FINAL" }
+		defines
+		{ 
+			"AZHAL_FINAL" 
+		}
 
 
 project "azhal"
@@ -123,14 +140,14 @@ project "azhal"
 
 	includedirs
 	{
+		"%{IncludePaths.vulkan}",
 		"%{IncludePaths.cxxopts}",
 		"%{IncludePaths.glfw}",
 		"%{IncludePaths.glm}",
-		"%{IncludePaths.imgui}",
 		"%{IncludePaths.tracy}",
 		"%{IncludePaths.spdlog}",
+		"%{IncludePaths.imgui}",
 		"%{IncludePaths.common}",
-		"$(VULKAN_SDK)/Include"
 	}
 	
 	files
@@ -190,6 +207,16 @@ project "azhal"
 			"AZHAL_ENABLE_LOGGING",
 			"TRACY_ENABLE"
 		}
+		
+	filter "configurations:Profile"
+		runtime "Release"
+		symbols "off"
+		optimize "Full"
+		defines
+		{ 
+			"AZHAL_FINAL",
+			"TRACY_ENABLE"
+		}
 	
 	filter "configurations:Final"
 		runtime "Release"
@@ -221,13 +248,14 @@ project "sandbox"
 
 	includedirs
 	{
+		"%{IncludePaths.vulkan}",
 		"%{IncludePaths.cxxopts}",
 		"%{IncludePaths.glm}",
 		"%{IncludePaths.spdlog}",
 		"%{IncludePaths.tracy}",
+		"%{IncludePaths.imgui}",
 		"%{IncludePaths.common}",
-		"%{IncludePaths.azhal}",
-		"$(VULKAN_SDK)/Include"
+		"%{IncludePaths.azhal}"
 	}
 
 	links 
@@ -266,9 +294,22 @@ project "sandbox"
 			"AZHAL_ENABLE_LOGGING",
 			"TRACY_ENABLE"
 		}
+		
+	filter "configurations:Profile"
+		runtime "Release"
+		symbols "off"
+		optimize "Full"
+		defines
+		{ 
+			"AZHAL_FINAL",
+			"TRACY_ENABLE"
+		}
 	
 	filter "configurations:Final"
 		runtime "Release"
 		symbols "off"
 		optimize "Full"
-		defines{ "AZHAL_FINAL" }
+		defines
+		{ 
+			"AZHAL_FINAL"
+		}
