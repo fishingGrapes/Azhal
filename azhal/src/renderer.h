@@ -1,6 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
-#include "gpuQueue.h"
+
+#include "renderDevice.h"
 
 namespace azhal
 {
@@ -29,8 +30,10 @@ namespace azhal
 
 	private:
 		void CreateInstance();
-		void CreateDevice();
 		void CreateSurface( const WindowPtr& pWindow );
+		void CreateDevice();
+		void CreateSwapchain( const WindowPtr& pWindow );
+	
 		void Destroy();
 
 		[[nodiscard( "azhal::Renderer::GetRequiredInstanceExtensions" )]]
@@ -39,12 +42,8 @@ namespace azhal
 		std::vector<const AnsiChar*> GetValidationLayers() const;
 		[[nodiscard( "azhal::Renderer::GetEnabledValidationFeatures" )]]
 		std::vector<vk::ValidationFeatureEnableEXT> GetEnabledValidationFeatures() const;
-		[[nodiscard( "azhal::Renderer::GetSuitablePhysicalDevice" )]]
-		vk::PhysicalDevice GetSuitablePhysicalDevice() const;
 		[[nodiscard( "azhal::Renderer::GetDebugUtilsMessengerCreateInfo" )]]
 		vk::DebugUtilsMessengerCreateInfoEXT GetDebugUtilsMessengerCreateInfo( const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn ) const;
-		[[nodiscard( "azhal::Renderer::GetRequiredDeviceExtensions" )]]
-		std::vector<const AnsiChar*> GetRequiredDeviceExtensions() const;
 
 	private:
 		Bool m_validationLayersEnabled;
@@ -55,15 +54,9 @@ namespace azhal
 		vk::DispatchLoaderDynamic m_DynamicDispatchInstance;
 		vk::DebugUtilsMessengerEXT m_debugMessenger;
 
-		vk::Device m_device;
-
-		GpuQueue m_graphicsQueue;
-		GpuQueue m_computeQueue;
-		GpuQueue m_transferQueue;
-		GpuQueue m_presentQueue;
-
 		vk::SurfaceKHR m_surface;
-
+		RenderDevice m_device;
+		Swapchain m_swapchain;
 	};
 
 	using RendererPtr = std::unique_ptr<Renderer>;

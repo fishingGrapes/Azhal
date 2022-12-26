@@ -16,6 +16,7 @@ namespace azhal
 		CreateInstance();
 		CreateSurface( renderer_create_info.pWindow );
 		CreateDevice();
+		CreateSwapchain( renderer_create_info.pWindow );
 	}
 
 	Renderer::~Renderer()
@@ -72,104 +73,21 @@ namespace azhal
 		const vk::StructureChain<vk::InstanceCreateInfo> instance_create_chain { instance_create_info };
 #endif
 
-		vk::ResultValue instance_create_rv = vk::createInstance( instance_create_chain.get<vk::InstanceCreateInfo>() );
-		m_instance = CheckVkResultValue( instance_create_rv, "failed to create instance" );
+		const vk::ResultValue rv_instance_create = vk::createInstance( instance_create_chain.get<vk::InstanceCreateInfo>() );
+		m_instance = CheckVkResultValue( rv_instance_create, "failed to create instance" );
 		AZHAL_LOG_WARN( "vulkan instance created" );
 
 		m_DynamicDispatchInstance = vk::DispatchLoaderDynamic( m_instance, vkGetInstanceProcAddr );
 
 #ifdef AZHAL_ENABLE_LOGGING
-		vk::ResultValue debug_msgnr_rv = m_instance.createDebugUtilsMessengerEXT( debug_utils_create_info, VK_NULL_HANDLE, m_DynamicDispatchInstance );
-		m_debugMessenger = CheckVkResultValue( debug_msgnr_rv, "failed to create debug messenger" );
+		const vk::ResultValue rv_debug_msgnr = m_instance.createDebugUtilsMessengerEXT( debug_utils_create_info, VK_NULL_HANDLE, m_DynamicDispatchInstance );
+		m_debugMessenger = CheckVkResultValue( rv_debug_msgnr, "failed to create debug messenger" );
 #endif
-	}
-
-	void Renderer::CreateDevice()
-	{
-		const std::vector<const AnsiChar*> required_extensions = GetRequiredDeviceExtensions();
-		const vk::PhysicalDevice physical_device = GetSuitablePhysicalDevice();
-
-		const auto find_queue_family_fn = [&physical_device]( vk::QueueFlagBits queue_flag, Bool is_present_queue = false )  -> QueueFamily
-		{
-			const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
-			for( Uint32 i = 0; i < queue_family_props.size(); ++i )
-			{
-				if( queue_family_props[ i ].queueFlags & queue_flag )
-				{
-					return i;
-				}
-			}
-
-			AZHAL_LOG_ALWAYS_ENABLED( "Failed to find an appropriate queue family for the given queue flag, {0}", queue_flag );
-			throw AzhalException( "Failed to find queue family" );
-		};
-
-		const auto find_present_queue_family_fn = [&physical_device, this]()  -> QueueFamily
-		{
-			const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
-			for( Uint32 i = 0; i < queue_family_props.size(); ++i )
-			{
-				const vk::ResultValue surface_support_rv = physical_device.getSurfaceSupportKHR( i, m_surface, m_DynamicDispatchInstance );
-				if( surface_support_rv.result == vk::Result::eSuccess )
-				{
-					return surface_support_rv.value;
-				}
-			}
-
-			AZHAL_LOG_ALWAYS_ENABLED( "Failed to find  present queue family for the given queue flag" );
-			throw AzhalException( "Failed to find present queue family" );
-		};
-
-		const QueueFamily graphics_queue_family = find_queue_family_fn( vk::QueueFlagBits::eGraphics );
-		const QueueFamily compute_queue_family = find_queue_family_fn( vk::QueueFlagBits::eCompute );
-		const QueueFamily transfer_queue_family = find_queue_family_fn( vk::QueueFlagBits::eTransfer );
-		const QueueFamily present_queue_family = find_present_queue_family_fn();
-
-		const std::set<QueueFamily> unique_queue_families
-		{
-			graphics_queue_family,
-			compute_queue_family,
-			transfer_queue_family,
-			present_queue_family
-		};
-
-		std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
-		for( QueueFamily queue_family : unique_queue_families )
-		{
-			// TODO: queue_priority
-			static const Float QUEUE_PRIORITY = 1.0f;
-			const vk::DeviceQueueCreateInfo queue_create_info
-			{
-				.queueFamilyIndex = queue_family,
-				.queueCount = 1,
-				.pQueuePriorities = &QUEUE_PRIORITY
-			};
-			queue_create_infos.emplace_back( queue_create_info );
-		}
-
-		vk::DeviceCreateInfo device_create_info
-		{
-			.queueCreateInfoCount = VK_SIZE_CAST( queue_create_infos.size() ),
-			.pQueueCreateInfos = queue_create_infos.data(),
-			.enabledExtensionCount = VK_SIZE_CAST( required_extensions.size() ),
-			.ppEnabledExtensionNames = required_extensions.data(),
-			// TODO: add enabled features
-			.pEnabledFeatures = VK_NULL_HANDLE
-		};
-
-		vk::ResultValue device_rv = physical_device.createDevice( device_create_info );
-		m_device = CheckVkResultValue( device_rv, "Failed to create vulkan device" );
-		AZHAL_LOG_WARN( "vulkan device created" );
-
-		m_graphicsQueue = GpuQueue( m_device.getQueue( graphics_queue_family, 0 ), graphics_queue_family );
-		m_computeQueue = GpuQueue( m_device.getQueue( compute_queue_family, 0 ), compute_queue_family );
-		m_transferQueue = GpuQueue( m_device.getQueue( transfer_queue_family, 0 ), transfer_queue_family );
-		m_presentQueue = GpuQueue( m_device.getQueue( present_queue_family, 0 ), present_queue_family );
 	}
 
 	void Renderer::CreateSurface( const WindowPtr& pWindow )
 	{
-		VkSurfaceKHR surface;
+		VkSurfaceKHR surface = VK_NULL_HANDLE;
 
 		VkResult result = glfwCreateWindowSurface( m_instance, static_cast< GLFWwindow* >( pWindow->Get() ), VK_NULL_HANDLE, &surface );
 		AZHAL_FATAL_ASSERT( result == VkResult::VK_SUCCESS, "failed to create window surface" );
@@ -178,10 +96,20 @@ namespace azhal
 		m_surface = surface;
 	}
 
+	void Renderer::CreateDevice()
+	{
+		m_device = RenderDevice( m_instance, m_surface, m_DynamicDispatchInstance );
+	}
+
+	void Renderer::CreateSwapchain( const WindowPtr& pWindow )
+	{
+		m_swapchain = m_device.CreateSwapchain( pWindow, m_surface );
+	}
+
 	void Renderer::Destroy()
 	{
+		m_device.destroy( m_swapchain );
 		m_device.destroy();
-		AZHAL_LOG_WARN( "vulkan device destroyed" );
 
 		m_instance.destroy( m_surface );
 		AZHAL_LOG_WARN( "vulkan surface destroyed" );
@@ -238,18 +166,6 @@ namespace azhal
 		return validation_features;
 	}
 
-	vk::PhysicalDevice Renderer::GetSuitablePhysicalDevice() const
-	{
-		vk::ResultValue physical_devices_rv = m_instance.enumeratePhysicalDevices();
-		const std::vector<vk::PhysicalDevice>& physical_devices = CheckVkResultValue( physical_devices_rv, "failed to enumerate physical devices" );
-
-		// TODO: check for appropriate physical device props
-		const vk::PhysicalDevice selected_physical_device = physical_devices[ 0 ];
-		const vk::PhysicalDeviceProperties& physical_device_props = selected_physical_device.getProperties();
-
-		return selected_physical_device;
-	}
-
 	vk::DebugUtilsMessengerCreateInfoEXT Renderer::GetDebugUtilsMessengerCreateInfo( const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn ) const
 	{
 		using  MessageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT;
@@ -279,16 +195,6 @@ namespace azhal
 		};
 
 		return debug_msg_create_info;
-	}
-
-	std::vector<const AnsiChar*> Renderer::GetRequiredDeviceExtensions() const
-	{
-		const std::vector<const AnsiChar*> required_device_extensions
-		{
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME
-		};
-
-		return required_device_extensions;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////

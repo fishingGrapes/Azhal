@@ -10,8 +10,8 @@ namespace azhal
 	{
 		if( res_val.result != vk::Result::eSuccess )
 		{
-			AZHAL_LOG_CRITICAL( "[CheckVkResultValue] {0}", fail_msg );
-			AZHAL_DEBUG_BREAK();
+			AZHAL_LOG_ALWAYS_ENABLED( "[CheckVkResultValue] {0}", fail_msg );
+			AZHAL_FATAL_ASSERT( false, fail_msg );
 		}
 
 		return res_val.value;
@@ -22,8 +22,8 @@ namespace azhal
 	{
 		if( std::find( successCodes.begin(), successCodes.end(), res_val.result ) != successCodes.end() )
 		{
-			AZHAL_LOG_CRITICAL( "[CheckVkResultValue] {0}", fail_msg );
-			AZHAL_DEBUG_BREAK();
+			AZHAL_LOG_ALWAYS_ENABLED( "[CheckVkResultValue] {0}", fail_msg );
+			AZHAL_FATAL_ASSERT( false, fail_msg );
 		}
 
 		return res_val.value;

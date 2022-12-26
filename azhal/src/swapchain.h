@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
+#include "window.h"
 
 namespace azhal
 {
@@ -8,23 +9,21 @@ namespace azhal
 	public:
 		Swapchain()
 			: m_format( vk::Format::eUndefined )
+			, m_colorSpace( vk::ColorSpaceKHR::eSrgbNonlinear )
 			, m_presentMode( vk::PresentModeKHR::eFifo )
 		{
 		}
-		Swapchain( const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface );
+		Swapchain( const WindowPtr& pWindow, const vk::PhysicalDevice& physical_device, const vk::Device& device, const vk::SurfaceKHR& surface );
+
+		void Destroy( const vk::Device& device );
 
 	private:
-
-		[[nodiscard( "azhal::Swapchain::ChooseFormat" )]]
-		vk::Format ChooseFormat( const std::vector<vk::SurfaceFormatKHR>& available_formats );
-		[[nodiscard( "azhal::Swapchain::ChoosePresentMode" )]]
-		vk::PresentModeKHR ChoosePresentMode( const std::vector<vk::PresentModeKHR>& available_present_modes );
-		[[nodiscard( "azhal::Swapchain::ChooseExtent" )]]
-		vk::Extent2D ChooseExtent( const vk::SurfaceCapabilitiesKHR& surface_capabilties );
-
 		vk::SwapchainKHR m_swapchain;
 		std::vector<vk::Image> m_images;
+		std::vector<vk::ImageView> m_imageViews;
+		
 		vk::Format m_format;
+		vk::ColorSpaceKHR m_colorSpace;
 		vk::PresentModeKHR m_presentMode;
 		vk::Extent2D m_extent;
 	};
