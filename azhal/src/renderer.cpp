@@ -119,7 +119,8 @@ namespace azhal
 			.fragmentShader = AZHAL_FILE_PATH( "azhal/shaders/simple.pspv" )
 		};
 
-		const PSO& pso = m_device.CreatePSO( pso_create_info );
+		PSO pso = m_device.CreatePSO( pso_create_info );
+		m_device.destroy( pso );
 	}
 
 	void Renderer::Destroy()

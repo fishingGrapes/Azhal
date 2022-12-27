@@ -14,6 +14,13 @@ namespace azhal
 	{
 	public:
 		PSO( const vk::Device& device, const PSOCreateInfo& pso_create_info );
+
+		AZHAL_INLINE void Destroy( const vk::Device& device )
+		{
+			device.destroy( m_pipelineLayout );
+		}
+
 	private:
+		vk::PipelineLayout m_pipelineLayout;
 	};
 }

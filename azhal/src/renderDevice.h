@@ -32,6 +32,12 @@ namespace azhal
 			swap_chain.Destroy( m_device );
 		}
 
+		template <>
+		AZHAL_INLINE void destroy( PSO& pso )
+		{
+			pso.Destroy( m_device );
+		}
+
 		AZHAL_INLINE const vk::Device& Get() const
 		{
 			return m_device;
@@ -52,7 +58,7 @@ namespace azhal
 		[[nodiscard( "azhal::RenderDevice::GetSuitablePhysicalDevice" )]]
 		vk::PhysicalDevice GetSuitablePhysicalDevice( const vk::Instance& instance ) const;
 		[[nodiscard( "azhal::RenderDevice::GetRequiredDeviceExtensions" )]]
-		std::vector<const AnsiChar*> GetRequiredDeviceExtensions() const;
+		const std::vector<const AnsiChar*> GetRequiredDeviceExtensions() const;
 
 
 		vk::PhysicalDevice m_physicalDevice;

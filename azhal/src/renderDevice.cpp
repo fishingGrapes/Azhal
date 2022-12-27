@@ -125,15 +125,30 @@ namespace azhal
 		const vk::ResultValue rv_extension_props = selected_physical_device.enumerateDeviceExtensionProperties();
 		const std::vector<vk::ExtensionProperties>& extension_props = CheckVkResultValue( rv_extension_props, "failed to get extension properties for device" );
 
+		const std::vector<const AnsiChar*>& required_extensions = GetRequiredDeviceExtensions();
+		for( const AnsiChar* extension_name : required_extensions )
+		{
+			const auto iter = std::find_if
+			(
+				extension_props.begin(), extension_props.end(),
+				[extension_name]( const vk::ExtensionProperties& prop ) {
+					return ( strcmp( prop.extensionName, extension_name ) == 0 );
+				}
+			);
+
+			AZHAL_FATAL_ASSERT( iter != extension_props.cend(), "extension not found in physical device properties" );
+		}
+
 		return selected_physical_device;
 	}
 
-	std::vector<const AnsiChar*> RenderDevice::GetRequiredDeviceExtensions() const
+	const std::vector<const AnsiChar*> RenderDevice::GetRequiredDeviceExtensions() const
 	{
 		const std::vector<const AnsiChar*> required_device_extensions
 		{
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-			VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
+			VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+			//VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME
 		};
 
 		return required_device_extensions;
