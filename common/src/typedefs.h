@@ -1,4 +1,7 @@
 #pragma once
+#include <glm/glm.hpp>
+#include <vector>
+#include <string>
 
 // boolean
 using Bool = bool;
@@ -21,7 +24,6 @@ using Uint64 = uint64_t;
 
 // signed char
 using AnsiChar = char;
-using Byte = char8_t;
 using Char8 = char8_t;
 using Char16 = char16_t;
 using Char32 = char32_t;
@@ -36,8 +38,11 @@ using Vec2 = glm::vec2;
 using Vec3 = glm::vec3;
 using Vec4 = glm::vec4;
 
+// string
+using String = std::string;
+
 
 // buffers
-using ByteBufferDynamic = std::vector<Byte>;
+using ByteBufferDynamic = std::vector<char>;
 template<Uint64 BUFFER_SIZE>
-using ByteBuffer = std::array<Byte, BUFFER_SIZE>;
+using ByteBuffer = std::array<char, BUFFER_SIZE>;

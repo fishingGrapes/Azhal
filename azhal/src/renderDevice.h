@@ -4,6 +4,7 @@
 #include "window.h"
 #include "gpuQueue.h"
 #include "swapchain.h"
+#include "pso.h"
 
 namespace azhal
 {
@@ -43,6 +44,9 @@ namespace azhal
 
 		[[nodiscard( "azhal::RenderDevice::CreateSwapchain" )]]
 		Swapchain CreateSwapchain( const WindowPtr& pWindow, const vk::SurfaceKHR& surface );
+
+		[[nodiscard( "azhal::RenderDevice::CreatePSO" )]]
+		PSO CreatePSO( const PSOCreateInfo& pso_create_info );
 
 	private:
 		[[nodiscard( "azhal::RenderDevice::GetSuitablePhysicalDevice" )]]

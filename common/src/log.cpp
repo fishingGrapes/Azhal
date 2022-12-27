@@ -12,7 +12,7 @@
 namespace
 {
 	size_t MAX_FILE_SIZE = 1'048'576 * 5; // 5 Megabytes
-	size_t MAX_FILE_COUNT = 10;
+	size_t MAX_FILE_COUNT = 5;
 }
 
 std::shared_ptr<spdlog::async_logger> AzhalLogger::s_logger;

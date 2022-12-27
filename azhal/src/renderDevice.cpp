@@ -2,7 +2,6 @@
 #include "renderDevice.h"
 
 #include <GLFW/glfw3.h>
-#include "vulkanHelper.h"
 #include "enums.h"
 
 namespace azhal
@@ -70,7 +69,7 @@ namespace azhal
 			queue_create_infos.emplace_back( queue_create_info );
 		}
 
-		vk::DeviceCreateInfo device_create_info
+		const vk::DeviceCreateInfo device_create_info
 		{
 			.queueCreateInfoCount = VK_SIZE_CAST( queue_create_infos.size() ),
 			.pQueueCreateInfos = queue_create_infos.data(),
@@ -80,7 +79,18 @@ namespace azhal
 			.pEnabledFeatures = VK_NULL_HANDLE
 		};
 
-		const vk::ResultValue rv_device = m_physicalDevice.createDevice( device_create_info );
+		constexpr vk::PhysicalDeviceDynamicRenderingFeatures dynamic_render_features
+		{
+			.dynamicRendering = VK_TRUE
+		};
+
+		const vk::StructureChain<vk::DeviceCreateInfo, vk::PhysicalDeviceDynamicRenderingFeatures> device_create_chain
+		{
+			device_create_info,
+			dynamic_render_features
+		};
+
+		const vk::ResultValue rv_device = m_physicalDevice.createDevice( device_create_chain.get<vk::DeviceCreateInfo>() );
 		m_device = CheckVkResultValue( rv_device, "Failed to create vulkan device" );
 		AZHAL_LOG_WARN( "vulkan device created" );
 
@@ -97,6 +107,11 @@ namespace azhal
 		return Swapchain( pWindow, m_physicalDevice, m_device, surface );
 	}
 
+	PSO RenderDevice::CreatePSO( const PSOCreateInfo& pso_create_info )
+	{
+		return PSO( m_device, pso_create_info );
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	vk::PhysicalDevice RenderDevice::GetSuitablePhysicalDevice( const vk::Instance& instance ) const
@@ -106,7 +121,9 @@ namespace azhal
 
 		// TODO: check for appropriate physical device props
 		const vk::PhysicalDevice selected_physical_device = physical_devices[ 0 ];
-		const vk::PhysicalDeviceProperties& physical_device_props = selected_physical_device.getProperties();
+
+		const vk::ResultValue rv_extension_props = selected_physical_device.enumerateDeviceExtensionProperties();
+		const std::vector<vk::ExtensionProperties>& extension_props = CheckVkResultValue( rv_extension_props, "failed to get extension properties for device" );
 
 		return selected_physical_device;
 	}
@@ -115,7 +132,8 @@ namespace azhal
 	{
 		const std::vector<const AnsiChar*> required_device_extensions
 		{
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+			VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
 		};
 
 		return required_device_extensions;

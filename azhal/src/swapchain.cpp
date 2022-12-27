@@ -2,7 +2,6 @@
 #include "swapchain.h"
 
 #include <GLFW/glfw3.h>
-#include "vulkanHelper.h"
 
 // TODO: set appropriate values when creating swapchain
 namespace azhal

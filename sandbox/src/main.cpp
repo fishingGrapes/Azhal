@@ -31,6 +31,7 @@ Int32 main( int argc, char** argv )
 		do
 		{
 			// update loop
+			pRenderer->Update();
 		} while( pSandboxWindow->Poll() );
 	}
 	catch( AzhalException& e )

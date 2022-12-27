@@ -1,5 +1,5 @@
 #pragma once
-
+#include <assert.h>
 
 #if defined(AZHAL_DEBUG) || defined(AZHAL_RELEASE)
 
@@ -16,7 +16,7 @@ do                                                                              
 
 #define AZHAL_STATIC_ASSERT(eval, msg)
 #define AZHAL_ASSERT(eval, msg)
-#define AZHAL_NULL_CHECK(ptr, msg)
+#define AZHAL_NULL_CHECK(x)
 
 #endif
 

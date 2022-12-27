@@ -23,7 +23,7 @@ namespace azhal
 	private:
 		GLFWwindow* m_pWindow;
 
-		std::string m_name;
+		String m_name;
 		Uint32 m_width;
 		Uint32 m_height;
 	};

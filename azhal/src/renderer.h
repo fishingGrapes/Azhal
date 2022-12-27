@@ -25,6 +25,8 @@ namespace azhal
 		Renderer() = delete;
 		Renderer( const Renderer& ) = delete;
 
+		void Update();
+
 		static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback( vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity,
 			vk::DebugUtilsMessageTypeFlagBitsEXT message_type, const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData );
 
@@ -33,7 +35,8 @@ namespace azhal
 		void CreateSurface( const WindowPtr& pWindow );
 		void CreateDevice();
 		void CreateSwapchain( const WindowPtr& pWindow );
-	
+		void Test();
+
 		void Destroy();
 
 		[[nodiscard( "azhal::Renderer::GetRequiredInstanceExtensions" )]]

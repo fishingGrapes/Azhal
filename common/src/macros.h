@@ -11,3 +11,6 @@
 #define AZHAL_LINE __LINE__	
 
 #define VK_SIZE_CAST(x) static_cast<Uint32>(x)
+
+// this is required to take into account the project being placed under temp/build/
+#define AZHAL_FILE_PATH(path) "../../../" path

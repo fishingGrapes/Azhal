@@ -21,7 +21,7 @@ namespace azhal
 		vk::SwapchainKHR m_swapchain;
 		std::vector<vk::Image> m_images;
 		std::vector<vk::ImageView> m_imageViews;
-		
+
 		vk::Format m_format;
 		vk::ColorSpaceKHR m_colorSpace;
 		vk::PresentModeKHR m_presentMode;

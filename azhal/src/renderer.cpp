@@ -1,7 +1,6 @@
 #include "azpch.h"
 #include "window.h"
 #include "renderer.h"
-#include "vulkanHelper.h"
 #include "enums.h"
 
 #include <GLFW/glfw3.h>
@@ -17,6 +16,11 @@ namespace azhal
 		CreateSurface( renderer_create_info.pWindow );
 		CreateDevice();
 		CreateSwapchain( renderer_create_info.pWindow );
+		Test();
+	}
+
+	void Renderer::Update()
+	{
 	}
 
 	Renderer::~Renderer()
@@ -104,6 +108,18 @@ namespace azhal
 	void Renderer::CreateSwapchain( const WindowPtr& pWindow )
 	{
 		m_swapchain = m_device.CreateSwapchain( pWindow, m_surface );
+	}
+
+	// TODO: testing remove this
+	void Renderer::Test()
+	{
+		const PSOCreateInfo pso_create_info
+		{
+			.vertexShader = AZHAL_FILE_PATH( "azhal/shaders/simple.vspv" ),
+			.fragmentShader = AZHAL_FILE_PATH( "azhal/shaders/simple.pspv" )
+		};
+
+		const PSO& pso = m_device.CreatePSO( pso_create_info );
 	}
 
 	void Renderer::Destroy()
@@ -202,7 +218,7 @@ namespace azhal
 	VKAPI_ATTR vk::Bool32 VKAPI_CALL Renderer::DebugCallback( vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity, vk::DebugUtilsMessageTypeFlagBitsEXT message_type,
 		const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData )
 	{
-		std::string message_type_name = "";
+		String message_type_name = "";
 		switch( message_type )
 		{
 		case vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral:
