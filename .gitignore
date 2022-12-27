@@ -36,11 +36,11 @@
 temp/
 bin/
 .vscode/
-common/external/cloc/
 JSON/
 logs/
 tools/tracy_profiler/
 tools/dxc/
+tools/cloc/
 
 # Files
 *.user
