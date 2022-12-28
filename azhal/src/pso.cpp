@@ -52,17 +52,7 @@ namespace azhal
 			.primitiveRestartEnable = VK_FALSE
 		};
 
-		const std::vector<vk::DynamicState> dynamic_states
-		{
-			vk::DynamicState::eViewport,
-			vk::DynamicState::eScissor
-		};
-		const vk::PipelineDynamicStateCreateInfo dynamic_state_create_info
-		{
-			.dynamicStateCount = VK_SIZE_CAST( dynamic_states.size() ),
-			.pDynamicStates = dynamic_states.data()
-		};
-		const vk::PipelineViewportStateCreateInfo viewpoert_state_create_info
+		const vk::PipelineViewportStateCreateInfo viewport_state_create_info
 		{
 			.viewportCount = 1,
 			.scissorCount = 1
@@ -77,6 +67,12 @@ namespace azhal
 			.frontFace = vk::FrontFace::eClockwise,
 			.depthBiasEnable = VK_FALSE,
 			.lineWidth = 1.0f
+		};
+
+		const vk::PipelineMultisampleStateCreateInfo multisample_state_create_info
+		{
+			.rasterizationSamples = vk::SampleCountFlagBits::e1,
+			.sampleShadingEnable = VK_FALSE
 		};
 
 		const vk::PipelineColorBlendAttachmentState color_blend_attch_state
@@ -100,6 +96,17 @@ namespace azhal
 			.blendConstants = std::array<Float, 4>{0, 0, 0, 0}
 		};
 
+		const std::vector<vk::DynamicState> dynamic_states
+		{
+			vk::DynamicState::eViewport,
+			vk::DynamicState::eScissor
+		};
+		const vk::PipelineDynamicStateCreateInfo dynamic_state_create_info
+		{
+			.dynamicStateCount = VK_SIZE_CAST( dynamic_states.size() ),
+			.pDynamicStates = dynamic_states.data()
+		};
+
 		const vk::PipelineLayoutCreateInfo pipeline_layout_create_info
 		{
 			.setLayoutCount = 0,
@@ -107,11 +114,48 @@ namespace azhal
 			.pushConstantRangeCount = 0,
 			.pPushConstantRanges = VK_NULL_HANDLE
 		};
-		const vk::ResultValue rv_pipleline_layout =  device.createPipelineLayout( pipeline_layout_create_info );
+		const vk::ResultValue rv_pipleline_layout = device.createPipelineLayout( pipeline_layout_create_info );
 		m_pipelineLayout = CheckVkResultValue( rv_pipleline_layout, "failed to create pipeline layout" );
+
+		const vk::PipelineRenderingCreateInfo pipeline_rendering_create_info
+		{
+			.colorAttachmentCount = VK_SIZE_CAST( pso_create_info.colorAttachmentFormats.size() ),
+			.pColorAttachmentFormats = pso_create_info.colorAttachmentFormats.data()
+		};
+
+		const vk::GraphicsPipelineCreateInfo graphics_pipeline_create_info
+		{
+			.stageCount = 2,
+			.pStages = shader_stages,
+			.pVertexInputState = &vertex_input_state_create_info,
+			.pInputAssemblyState = &input_assembly_state_create_info,
+			.pViewportState = &viewport_state_create_info,
+			.pRasterizationState = &raster_state_create_info,
+			.pMultisampleState = &multisample_state_create_info,
+			.pDepthStencilState = VK_NULL_HANDLE,
+			.pColorBlendState = &color_blend_state_create_info,
+			.pDynamicState = &dynamic_state_create_info,
+			.layout = m_pipelineLayout,
+			.renderPass = VK_NULL_HANDLE
+		};
+
+		const vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> graphics_pipeline_creation_chain
+		{
+			graphics_pipeline_create_info,
+			pipeline_rendering_create_info
+		};
+
+		const vk::ResultValue rv_graphics_pipeline = device.createGraphicsPipeline( VK_NULL_HANDLE, graphics_pipeline_creation_chain.get<vk::GraphicsPipelineCreateInfo>() );
+		m_pipeline = CheckVkResultValue( rv_graphics_pipeline, "failed to create graphics pipeline" );
 
 		device.destroy( vertex_shader_module );
 		device.destroy( fragment_shader_module );
+	}
+
+	void PSO::Destroy( const vk::Device& device )
+	{
+		device.destroy( m_pipeline );
+		device.destroy( m_pipelineLayout );
 	}
 
 }

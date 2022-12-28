@@ -15,6 +15,11 @@ namespace azhal
 		}
 		Swapchain( const WindowPtr& pWindow, const vk::PhysicalDevice& physical_device, const vk::Device& device, const vk::SurfaceKHR& surface );
 
+		AZHAL_INLINE vk::Format GetFormat() const
+		{
+			return m_format;
+		}
+
 		void Destroy( const vk::Device& device );
 
 	private:

@@ -228,7 +228,6 @@ project "azhal"
 		defines
 		{ 
 			"AZHAL_FINAL",
-			--"VULKAN_HPP_NO_EXCEPTIONS",
 			--"VK_DEADLY_VALIDATION"
 		}
 

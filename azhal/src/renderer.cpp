@@ -116,7 +116,9 @@ namespace azhal
 		const PSOCreateInfo pso_create_info
 		{
 			.vertexShader = AZHAL_FILE_PATH( "azhal/shaders/simple.vspv" ),
-			.fragmentShader = AZHAL_FILE_PATH( "azhal/shaders/simple.pspv" )
+			.fragmentShader = AZHAL_FILE_PATH( "azhal/shaders/simple.pspv" ),
+			.IsDynamicRendering = VK_TRUE,
+			.colorAttachmentFormats = std::vector<vk::Format>{ m_swapchain.GetFormat() }
 		};
 
 		PSO pso = m_device.CreatePSO( pso_create_info );
