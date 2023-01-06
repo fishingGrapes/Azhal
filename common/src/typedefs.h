@@ -38,6 +38,11 @@ using Vec2 = glm::vec2;
 using Vec3 = glm::vec3;
 using Vec4 = glm::vec4;
 
+// unsigned integer vector types
+using Uvec2 = glm::uvec2;
+using Uvec3 = glm::uvec3;
+using Uvec4 = glm::uvec4;
+
 // string
 using String = std::string;
 

@@ -22,17 +22,15 @@ namespace azhal
 		AZHAL_FATAL_ASSERT( m_pWindow != nullptr, "Failed to create GLFWwindow" );
 	}
 
+
 	Window::~Window()
 	{
 		glfwDestroyWindow( m_pWindow );
 		glfwTerminate();
 	}
 
-	/// <summary>
-	/// Polls for input events
-	/// </summary>
-	/// <returns>whether the window is open or not</returns>
-	Bool Window::Poll() const
+
+	Bool Window::poll() const
 	{
 		if( !glfwWindowShouldClose( m_pWindow ) )
 		{
@@ -41,5 +39,14 @@ namespace azhal
 		}
 
 		return false;
+	}
+
+
+	Uvec2 Window::get_framebuffer_size() const
+	{
+		Int32 width, height;
+		glfwGetFramebufferSize( m_pWindow, &width, &height );
+
+		return { width, height };
 	}
 }

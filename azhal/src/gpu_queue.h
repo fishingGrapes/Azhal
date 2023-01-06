@@ -29,7 +29,7 @@ namespace azhal
 			return m_queue;
 		}
 
-		AZHAL_INLINE QueueFamily Family() const
+		AZHAL_INLINE QueueFamily family() const
 		{
 			return m_family;
 		}
