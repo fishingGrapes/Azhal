@@ -14,7 +14,7 @@ namespace azhal
 				.pCode = reinterpret_cast< const Uint32* >( shader_code.data() )
 			};
 			const vk::ResultValue rv_shader_module = device.createShaderModule( shader_create_info );
-			return ( CheckVkResultValue( rv_shader_module, "failed to create shader module" ) );
+			return ( get_vk_result( rv_shader_module, "failed to create shader module" ) );
 		};
 
 		const vk::ShaderModule& vertex_shader_module = shader_module_create_fn( pso_create_info.vertexShader );
@@ -115,7 +115,7 @@ namespace azhal
 			.pPushConstantRanges = VK_NULL_HANDLE
 		};
 		const vk::ResultValue rv_pipleline_layout = device.createPipelineLayout( pipeline_layout_create_info );
-		m_pipelineLayout = CheckVkResultValue( rv_pipleline_layout, "failed to create pipeline layout" );
+		m_pipelineLayout = get_vk_result( rv_pipleline_layout, "failed to create pipeline layout" );
 
 		const vk::PipelineRenderingCreateInfo pipeline_rendering_create_info
 		{
@@ -146,7 +146,7 @@ namespace azhal
 		};
 
 		const vk::ResultValue rv_graphics_pipeline = device.createGraphicsPipeline( VK_NULL_HANDLE, graphics_pipeline_creation_chain.get<vk::GraphicsPipelineCreateInfo>() );
-		m_pipeline = CheckVkResultValue( rv_graphics_pipeline, "failed to create graphics pipeline" );
+		m_pipeline = get_vk_result( rv_graphics_pipeline, "failed to create graphics pipeline" );
 
 		device.destroy( vertex_shader_module );
 		device.destroy( fragment_shader_module );

@@ -10,7 +10,7 @@ namespace azhal
 	struct RendererCreateInfo
 	{
 	public:
-		const WindowPtr& pWindow = nullptr;
+		const Window& window;
 		Bool IsValidationLayersEnabled = false;
 		Bool IsGpuAssistedValidationEnabled = false;
 		vk::DebugUtilsMessageSeverityFlagBitsEXT DebugMessageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose;
@@ -20,45 +20,22 @@ namespace azhal
 	{
 	public:
 		explicit Renderer( const RendererCreateInfo& renderer_create_info );
-		~Renderer();
+		void destroy();
 
 		Renderer() = delete;
 		Renderer( const Renderer& ) = delete;
 
-		void Update();
-
 		static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback( vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity,
 			vk::DebugUtilsMessageTypeFlagBitsEXT message_type, const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData );
 
-	private:
-		void CreateInstance();
-		void CreateSurface( const WindowPtr& pWindow );
-		void CreateDevice();
-		void CreateSwapchain( const WindowPtr& pWindow );
-		void Test();
-
-		void Destroy();
-
-		[[nodiscard( "azhal::Renderer::GetRequiredInstanceExtensions" )]]
-		std::vector<const AnsiChar*> GetRequiredInstanceExtensions() const;
-		[[nodiscard( "azhal::Renderer::GetValidationLayers" )]]
-		std::vector<const AnsiChar*> GetValidationLayers() const;
-		[[nodiscard( "azhal::Renderer::GetEnabledValidationFeatures" )]]
-		std::vector<vk::ValidationFeatureEnableEXT> GetEnabledValidationFeatures() const;
-		[[nodiscard( "azhal::Renderer::GetDebugUtilsMessengerCreateInfo" )]]
-		vk::DebugUtilsMessengerCreateInfoEXT GetDebugUtilsMessengerCreateInfo( const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn ) const;
 
 	private:
-		Bool m_validationLayersEnabled;
-		Bool m_gpuAssistedValidationEnabled;
-		vk::DebugUtilsMessageSeverityFlagBitsEXT m_debugMessageSeverity;
-
 		vk::Instance m_instance;
-		vk::DispatchLoaderDynamic m_DynamicDispatchInstance;
+		vk::DispatchLoaderDynamic m_instanceDynamicDispatchLoader;
 		vk::DebugUtilsMessengerEXT m_debugMessenger;
 
 		vk::SurfaceKHR m_surface;
-		RenderDevice m_device;
+		vk::Device m_device;
 		Swapchain m_swapchain;
 	};
 

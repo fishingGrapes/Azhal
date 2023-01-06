@@ -7,29 +7,13 @@ namespace azhal
 	class Swapchain
 	{
 	public:
-		Swapchain()
-			: m_format( vk::Format::eUndefined )
-			, m_colorSpace( vk::ColorSpaceKHR::eSrgbNonlinear )
-			, m_presentMode( vk::PresentModeKHR::eFifo )
-		{
-		}
-		Swapchain( const WindowPtr& pWindow, const vk::PhysicalDevice& physical_device, const vk::Device& device, const vk::SurfaceKHR& surface );
+		const vk::SwapchainKHR vkSwapchain;
+		const std::vector<vk::Image> images;
+		const std::vector<vk::ImageView> imageViews;
 
-		AZHAL_INLINE vk::Format GetFormat() const
-		{
-			return m_format;
-		}
-
-		void Destroy( const vk::Device& device );
-
-	private:
-		vk::SwapchainKHR m_swapchain;
-		std::vector<vk::Image> m_images;
-		std::vector<vk::ImageView> m_imageViews;
-
-		vk::Format m_format;
-		vk::ColorSpaceKHR m_colorSpace;
-		vk::PresentModeKHR m_presentMode;
-		vk::Extent2D m_extent;
+		const vk::Format imageFormat;
+		const vk::ColorSpaceKHR imageColorSpace;
+		const vk::PresentModeKHR presentMode;
+		const vk::Extent2D imageExtent;
 	};
 }
