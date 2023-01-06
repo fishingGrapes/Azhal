@@ -2,6 +2,7 @@
 #include "core.h"
 
 #include "enums.h"
+#include "pso.h"
 #include "swapchain.h"
 #include "vulkan_init_helper.h"
 #include "window.h"
@@ -109,6 +110,18 @@ namespace azhal
 
 			g_swapchain = create_swapchain( g_physicalDevice, g_device, g_surface, desired_extent );
 		}
+
+		//testing
+		const PSOCreationParams pso_creation_params
+		{
+			.pVertexShader = AZHAL_FILE_PATH( "azhal/shaders/simple.vspv" ),
+			.pFragmentShader = AZHAL_FILE_PATH( "azhal/shaders/simple.pspv" ),
+			.isDynamicRendering = VK_TRUE,
+			.colorAttachmentFormats = std::vector<vk::Format>{ g_swapchain.imageFormat }
+		};
+
+		PSO pso = create_pso( g_device, pso_creation_params );
+		destroy_pso( g_device, pso );
 	}
 
 

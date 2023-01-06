@@ -3,23 +3,21 @@
 
 namespace azhal
 {
-	struct PSOCreateInfo
+	struct PSOCreationParams
 	{
-	public:
-		const AnsiChar* vertexShader;
-		const AnsiChar* fragmentShader;
-		Bool IsDynamicRendering = VK_FALSE;
+		const AnsiChar* pVertexShader;
+		const AnsiChar* pFragmentShader;
+		Bool isDynamicRendering = VK_FALSE;
 		const std::vector<vk::Format> colorAttachmentFormats;
 	};
 
-	class PSO
+	struct PSO
 	{
-	public:
-		PSO( const vk::Device& device, const PSOCreateInfo& pso_create_info );
-		void Destroy( const vk::Device& device );
-
-	private:
-		vk::PipelineLayout m_pipelineLayout;
-		vk::Pipeline m_pipeline;
+		vk::PipelineLayout pipelineLayout;
+		vk::Pipeline vkPipelineObject;
 	};
+
+	PSO create_pso( const vk::Device& device, const PSOCreationParams& pso_creation_params );
+	void destroy_pso( const vk::Device& device, PSO& pso );
+
 }

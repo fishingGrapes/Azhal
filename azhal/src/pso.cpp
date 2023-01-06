@@ -3,9 +3,9 @@
 
 namespace azhal
 {
-	PSO::PSO( const vk::Device& device, const PSOCreateInfo& pso_create_info )
+	PSO create_pso( const vk::Device& device, const PSOCreationParams& pso_creation_params )
 	{
-		const auto shader_module_create_fn = [&device, this]( const AnsiChar* file_path ) -> const vk::ShaderModule
+		const auto shader_module_create_fn = [&device]( const AnsiChar* file_path ) -> const vk::ShaderModule
 		{
 			const ByteBufferDynamic& shader_code = LoadBinaryBlob( file_path );
 			const vk::ShaderModuleCreateInfo shader_create_info
@@ -17,8 +17,8 @@ namespace azhal
 			return ( get_vk_result( rv_shader_module, "failed to create shader module" ) );
 		};
 
-		const vk::ShaderModule& vertex_shader_module = shader_module_create_fn( pso_create_info.vertexShader );
-		const vk::ShaderModule& fragment_shader_module = shader_module_create_fn( pso_create_info.fragmentShader );
+		const vk::ShaderModule& vertex_shader_module = shader_module_create_fn( pso_creation_params.pVertexShader );
+		const vk::ShaderModule& fragment_shader_module = shader_module_create_fn( pso_creation_params.pFragmentShader );
 
 		const vk::PipelineShaderStageCreateInfo vertex_shader_stage_create_info
 		{
@@ -115,12 +115,12 @@ namespace azhal
 			.pPushConstantRanges = VK_NULL_HANDLE
 		};
 		const vk::ResultValue rv_pipleline_layout = device.createPipelineLayout( pipeline_layout_create_info );
-		m_pipelineLayout = get_vk_result( rv_pipleline_layout, "failed to create pipeline layout" );
+		const vk::PipelineLayout& pipeline_layout = get_vk_result( rv_pipleline_layout, "failed to create pipeline layout" );
 
 		const vk::PipelineRenderingCreateInfo pipeline_rendering_create_info
 		{
-			.colorAttachmentCount = VK_SIZE_CAST( pso_create_info.colorAttachmentFormats.size() ),
-			.pColorAttachmentFormats = pso_create_info.colorAttachmentFormats.data()
+			.colorAttachmentCount = VK_SIZE_CAST( pso_creation_params.colorAttachmentFormats.size() ),
+			.pColorAttachmentFormats = pso_creation_params.colorAttachmentFormats.data()
 		};
 
 		const vk::GraphicsPipelineCreateInfo graphics_pipeline_create_info
@@ -135,7 +135,7 @@ namespace azhal
 			.pDepthStencilState = VK_NULL_HANDLE,
 			.pColorBlendState = &color_blend_state_create_info,
 			.pDynamicState = &dynamic_state_create_info,
-			.layout = m_pipelineLayout,
+			.layout = pipeline_layout,
 			.renderPass = VK_NULL_HANDLE
 		};
 
@@ -146,16 +146,24 @@ namespace azhal
 		};
 
 		const vk::ResultValue rv_graphics_pipeline = device.createGraphicsPipeline( VK_NULL_HANDLE, graphics_pipeline_creation_chain.get<vk::GraphicsPipelineCreateInfo>() );
-		m_pipeline = get_vk_result( rv_graphics_pipeline, "failed to create graphics pipeline" );
+		const vk::Pipeline& vk_pipeline = get_vk_result( rv_graphics_pipeline, "failed to create graphics pipeline" );
 
 		device.destroy( vertex_shader_module );
 		device.destroy( fragment_shader_module );
+
+		const PSO pso
+		{
+			.pipelineLayout = pipeline_layout,
+			.vkPipelineObject = vk_pipeline
+		};
+
+		return pso;
 	}
 
-	void PSO::Destroy( const vk::Device& device )
+	void destroy_pso( const vk::Device& device, PSO& pso )
 	{
-		device.destroy( m_pipeline );
-		device.destroy( m_pipelineLayout );
+		device.destroy( pso.vkPipelineObject );
+		device.destroy( pso.pipelineLayout );
 	}
 
 }

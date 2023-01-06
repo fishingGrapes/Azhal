@@ -1,5 +1,4 @@
 #pragma once
-#include "swapchain.h"
 
 namespace azhal
 {
@@ -25,11 +24,6 @@ namespace azhal
 
 	vk::Device create_device( const vk::Instance& instance, const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader );
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	Swapchain create_swapchain( const vk::PhysicalDevice& physical_device, const vk::Device& device, const vk::SurfaceKHR& surface, vk::Extent2D desired_extent );
-
-	void destroy_swapchain( const vk::Device& device, Swapchain& swapchain );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

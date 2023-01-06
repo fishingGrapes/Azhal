@@ -15,4 +15,9 @@ namespace azhal
 		vk::ColorSpaceKHR imageColorSpace;
 		vk::PresentModeKHR presentMode;
 	};
+
+
+	Swapchain create_swapchain( const vk::PhysicalDevice& physical_device, const vk::Device& device, const vk::SurfaceKHR& surface, vk::Extent2D desired_extent );
+
+	void destroy_swapchain( const vk::Device& device, Swapchain& swapchain );
 }
