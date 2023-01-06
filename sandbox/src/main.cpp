@@ -1,5 +1,5 @@
 #include "common.h"
-#include "azhalRenderer.h"
+#include "azhal_renderer.h"
 
 Int32 main( int argc, char** argv )
 {
@@ -15,24 +15,19 @@ Int32 main( int argc, char** argv )
 
 	const cxxopts::ParseResult& cmd_line_result = cmd_line_options.parse( argc, argv );
 
+	const Bool is_validation_layers_enabled = cmd_line_result.count( "vkValidation" ) > 0;
+	const Bool is_gpu_assisted_validation_enabled = cmd_line_result.count( "gpuValidation" ) > 0;
+
 	try
 	{
-		WindowPtr pSandboxWindow = std::make_unique<Window>( "Azhal Sandbox", 1280, 720 );
-
-		const RendererCreateInfo renderer_create_info
-		{
-			.pWindow = pSandboxWindow,
-			.IsValidationLayersEnabled = cmd_line_result.count( "vkValidation" ) > 0,
-			.IsGpuAssistedValidationEnabled = cmd_line_result.count( "gpuValidation" ) > 0,
-			.DebugMessageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo
-		};
-		RendererPtr pRenderer = std::make_unique<Renderer>( renderer_create_info );
+		WindowPtr p_window = std::make_unique<Window>( "Azhal Sandbox", 1280, 720 );
+		azhal::init( *p_window, is_validation_layers_enabled, vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose, is_gpu_assisted_validation_enabled );
 
 		do
 		{
-			// update loop
-			pRenderer->Update();
-		} while( pSandboxWindow->Poll() );
+		} while( p_window->poll() );
+
+		azhal::shutdown();
 	}
 	catch( AzhalException& e )
 	{

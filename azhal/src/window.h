@@ -13,12 +13,14 @@ namespace azhal
 		Window() = delete;
 		Window( const Window& ) = delete;
 
-		Bool Poll() const;
+		Bool poll() const;
 
-		AZHAL_INLINE void* Get() const
+		AZHAL_FORCE_INLINE void* get() const
 		{
 			return static_cast< void* >( m_pWindow );
 		}
+
+		Uvec2 get_framebuffer_size() const;
 
 	private:
 		GLFWwindow* m_pWindow;

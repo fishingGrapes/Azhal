@@ -1,19 +1,18 @@
 #pragma once
-#include <vulkan/vulkan.hpp>
-#include "window.h"
 
 namespace azhal
 {
-	class Swapchain
+	// TODO: change swapchain creation and deletion
+	struct Swapchain
 	{
-	public:
-		const vk::SwapchainKHR vkSwapchain;
-		const std::vector<vk::Image> images;
-		const std::vector<vk::ImageView> imageViews;
+		vk::SwapchainKHR vkSwapchain = VK_NULL_HANDLE;
 
-		const vk::Format imageFormat;
-		const vk::ColorSpaceKHR imageColorSpace;
-		const vk::PresentModeKHR presentMode;
-		const vk::Extent2D imageExtent;
+		std::vector<vk::Image> images;
+		std::vector<vk::ImageView> imageViews;
+
+		vk::Extent2D imageExtent;
+		vk::Format imageFormat;
+		vk::ColorSpaceKHR imageColorSpace;
+		vk::PresentModeKHR presentMode;
 	};
 }

@@ -1,8 +1,8 @@
 #include "azpch.h"
 #include "vulkan_init_helper.h"
 
+#include "enums.h"
 #include "window.h"
-#include "gpuQueue.h"
 
 #include <GLFW/glfw3.h>
 #include <ranges>
@@ -196,15 +196,24 @@ namespace
 
 namespace azhal
 {
-	vk::Instance create_vulkan_instance( const VulkanInstanceCreationParams& instance_creation_params )
+	vk::Instance create_instance( const VulkanInstanceCreationParams& instance_creation_params )
 	{
+		const vk::ApplicationInfo app_info
+		{
+			.pNext = VK_NULL_HANDLE,
+			.pApplicationName = "sandbox",
+			.applicationVersion = VK_MAKE_VERSION( 0, 0, 1 ),
+			.pEngineName = "azhal",
+			.apiVersion = VK_API_VERSION_1_3
+		};
+
 		const std::vector<const AnsiChar*>& validation_layers = get_validation_layers( instance_creation_params.enableValidationLayers );
 		const std::vector<const AnsiChar*>& required_extensions = get_required_instance_extensions();
 
 		vk::InstanceCreateInfo instance_create_info
 		{
 			.pNext = VK_NULL_HANDLE,
-			.pApplicationInfo = &( instance_creation_params.app_info ),
+			.pApplicationInfo = &app_info,
 			.enabledLayerCount = VK_SIZE_CAST( validation_layers.size() ),
 			.ppEnabledLayerNames = validation_layers.data(),
 			.enabledExtensionCount = VK_SIZE_CAST( required_extensions.size() ),
@@ -254,11 +263,11 @@ namespace azhal
 	}
 
 
-	vk::SurfaceKHR create_vulkan_surface( const vk::Instance& instance, const Window& window )
+	vk::SurfaceKHR create_vulkan_surface( const vk::Instance& instance, void* p_window )
 	{
 		VkSurfaceKHR surface = VK_NULL_HANDLE;
 
-		VkResult result = glfwCreateWindowSurface( instance, static_cast< GLFWwindow* >( window.Get() ), VK_NULL_HANDLE, &surface );
+		VkResult result = glfwCreateWindowSurface( instance, static_cast< GLFWwindow* >( p_window ), VK_NULL_HANDLE, &surface );
 		AZHAL_FATAL_ASSERT( result == VkResult::VK_SUCCESS, "failed to create window surface" );
 		AZHAL_LOG_WARN( "vulkan surface created" );
 
@@ -283,7 +292,8 @@ namespace azhal
 			const auto iter = std::find_if
 			(
 				extension_props.begin(), extension_props.end(),
-				[extension_name]( const vk::ExtensionProperties& prop ) {
+
+				[extension_name]( const vk::ExtensionProperties& prop ) -> Bool {
 					return ( strcmp( prop.extensionName, extension_name ) == 0 );
 				}
 			);
@@ -295,9 +305,9 @@ namespace azhal
 	}
 
 
-	vk::Device create_vulkan_device( const vk::Instance& instance, const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader )
+	vk::Device create_device( const vk::Instance& instance, const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader )
 	{
-		const auto find_queue_family_fn = [&physical_device]( vk::QueueFlagBits queue_flag, Bool is_present_queue = false )  -> QueueFamily
+		const auto find_queue_family_fn = [&physical_device]( vk::QueueFlagBits queue_flag, Bool is_present_queue = false )  -> Uint32
 		{
 			const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
 			for( Uint32 i = 0; i < queue_family_props.size(); ++i )
@@ -312,7 +322,7 @@ namespace azhal
 			throw AzhalException( "Failed to find queue family" );
 		};
 
-		const auto find_present_queue_family_fn = [&physical_device, &surface, &dynamic_dispatch_loader]()  -> QueueFamily
+		const auto find_present_queue_family_fn = [&physical_device, &surface, &dynamic_dispatch_loader]()  -> Uint32
 		{
 			const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
 			for( Uint32 i = 0; i < queue_family_props.size(); ++i )
@@ -328,12 +338,12 @@ namespace azhal
 			throw AzhalException( "Failed to find present queue family" );
 		};
 
-		const QueueFamily graphics_queue_family = find_queue_family_fn( vk::QueueFlagBits::eGraphics );
-		const QueueFamily compute_queue_family = find_queue_family_fn( vk::QueueFlagBits::eCompute );
-		const QueueFamily transfer_queue_family = find_queue_family_fn( vk::QueueFlagBits::eTransfer );
-		const QueueFamily present_queue_family = find_present_queue_family_fn();
+		const Uint32 graphics_queue_family = find_queue_family_fn( vk::QueueFlagBits::eGraphics );
+		const Uint32 compute_queue_family = find_queue_family_fn( vk::QueueFlagBits::eCompute );
+		const Uint32 transfer_queue_family = find_queue_family_fn( vk::QueueFlagBits::eTransfer );
+		const Uint32 present_queue_family = find_present_queue_family_fn();
 
-		const std::set<QueueFamily> unique_queue_families
+		const std::set<Uint32> unique_queue_families
 		{
 			graphics_queue_family,
 			compute_queue_family,
@@ -342,7 +352,7 @@ namespace azhal
 		};
 
 		std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
-		for( QueueFamily queue_family : unique_queue_families )
+		for( Uint32 queue_family : unique_queue_families )
 		{
 			// TODO: queue_priority
 			static const Float QUEUE_PRIORITY = 1.0f;
@@ -383,12 +393,10 @@ namespace azhal
 		AZHAL_LOG_WARN( "vulkan device created" );
 
 		return device;
-
-		//m_graphicsQueue = GpuQueue( device.getQueue( graphics_queue_family, 0 ), graphics_queue_family );
-		//m_computeQueue = GpuQueue( device.getQueue( compute_queue_family, 0 ), compute_queue_family );
-		//m_transferQueue = GpuQueue( device.getQueue( transfer_queue_family, 0 ), transfer_queue_family );
-		//m_presentQueue = GpuQueue( device.getQueue( present_queue_family, 0 ), present_queue_family );
 	}
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 	Swapchain create_swapchain( const vk::PhysicalDevice& physical_device, const vk::Device& device, const vk::SurfaceKHR& surface, vk::Extent2D desired_extent )
@@ -437,17 +445,34 @@ namespace azhal
 		}
 		AZHAL_LOG_WARN( "vulkan created swapchain image views" );
 
-		Swapchain swapchain
+		const Swapchain swapchain
 		{
 			.vkSwapchain = vk_swapchain,
 			.images = swapchain_images,
 			.imageViews = swapchain_imageviews,
+			.imageExtent = swapchain_create_info.imageExtent,
 			.imageFormat = swapchain_create_info.imageFormat,
 			.imageColorSpace = swapchain_create_info.imageColorSpace,
 			.presentMode = swapchain_create_info.presentMode,
-			.imageExtent = swapchain_create_info.imageExtent
 		};
 
 		return swapchain;
 	}
+
+
+	void destroy_swapchain( const vk::Device& device, Swapchain& swapchain )
+	{
+		for( const vk::ImageView& image_view : swapchain.imageViews )
+		{
+			device.destroy( image_view );
+		}
+		
+		swapchain.imageViews.clear();
+		swapchain.images.clear();
+
+		device.destroy( swapchain.vkSwapchain );
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
