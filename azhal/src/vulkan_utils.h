@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 
-namespace azhal
+namespace gdevice
 {
 	template <typename T>
 	AZHAL_INLINE T get_vk_result( const vk::ResultValue<T>& res_val, const AnsiChar* fail_msg = "" )

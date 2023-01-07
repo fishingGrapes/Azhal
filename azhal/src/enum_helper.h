@@ -1,7 +1,7 @@
 #pragma once
 #include <spdlog/fmt/bundled/format.h>
 
-namespace azhal
+namespace gdevice
 {
 	constexpr const AnsiChar* EnumToString( vk::DebugUtilsMessageTypeFlagBitsEXT enum_val )
 	{
@@ -67,7 +67,7 @@ struct fmt::formatter<ENUM_TYPE> : formatter<std::string_view>                  
 {                                                                                      \
 	template <typename FormatContext>                                                  \
 	auto format( ENUM_TYPE enum_val, FormatContext& ctx ) -> decltype( ctx.out() ) {   \
-		return formatter<string_view>::format( azhal::EnumToString( enum_val ), ctx ); \
+		return formatter<string_view>::format( gdevice::EnumToString( enum_val ), ctx ); \
 	}                                                                                  \
 }                                                                                      \
 

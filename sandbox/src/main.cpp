@@ -3,8 +3,6 @@
 
 Int32 main( int argc, char** argv )
 {
-	using namespace azhal;
-
 	AzhalLogger::Init( "azhal" );
 	AZHAL_LOG_INFO( "initialized logger.." );
 
@@ -15,23 +13,35 @@ Int32 main( int argc, char** argv )
 
 	const cxxopts::ParseResult& cmd_line_result = cmd_line_options.parse( argc, argv );
 
-	const Bool is_validation_layers_enabled = cmd_line_result.count( "vkValidation" ) > 0;
+	const Bool are_validation_layers_enabled = cmd_line_result.count( "vkValidation" ) > 0;
 	const Bool is_gpu_assisted_validation_enabled = cmd_line_result.count( "gpuValidation" ) > 0;
 
 	try
 	{
-		WindowPtr p_window = std::make_unique<Window>( "Azhal Sandbox", 1280, 720 );
-		azhal::init( *p_window, is_validation_layers_enabled, vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose, is_gpu_assisted_validation_enabled );
+		std::unique_ptr<Window> p_window = std::make_unique<Window>( "Azhal Sandbox", 1280, 720 );
+
+		const Uvec2 framebuffer_size = p_window->get_framebuffer_size();
+		const vk::Extent2D swapchain_extent { framebuffer_size.x, framebuffer_size.y };
+
+		const gdevice::GDeviceInitParams gdevice_init_params
+		{
+			.pWindow = p_window->get(),
+			.swapchainExtent = swapchain_extent,
+			.areValidationLayersEnabled = are_validation_layers_enabled,
+			.debugMessageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose,
+			.isGpuAssistedValidationEnabled = is_gpu_assisted_validation_enabled
+		};
+		gdevice::init( gdevice_init_params );
 
 		do
 		{
 		} while( p_window->poll() );
 
-		azhal::shutdown();
+		gdevice::shutdown();
 	}
-	catch( AzhalException& e )
+	catch( GDeviceException& e )
 	{
-		AZHAL_LOG_ALWAYS_ENABLED( "[AzhalException] {0}", e.what() );
+		AZHAL_LOG_ALWAYS_ENABLED( "[GDeviceException] {0}", e.what() );
 	}
 
 	return 0;

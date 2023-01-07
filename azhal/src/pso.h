@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 
-namespace azhal
+namespace gdevice
 {
 	struct PSOCreationParams
 	{

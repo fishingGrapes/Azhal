@@ -1,7 +1,7 @@
 #include "azpch.h"
 #include "pso.h"
 
-namespace azhal
+namespace gdevice
 {
 	PSO create_pso( const vk::Device& device, const PSOCreationParams& pso_creation_params )
 	{

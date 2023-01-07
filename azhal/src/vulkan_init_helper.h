@@ -1,6 +1,6 @@
 #pragma once
 
-namespace azhal
+namespace gdevice
 {
 	struct VulkanInstanceCreationParams
 	{
@@ -22,7 +22,11 @@ namespace azhal
 
 	vk::PhysicalDevice get_suitable_physical_device( const vk::Instance& instance );
 
-	vk::Device create_device( const vk::Instance& instance, const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader );
+	Uint32 find_queue_family_index( const vk::PhysicalDevice& physical_device, vk::QueueFlagBits queue_flag );
+
+	Uint32 find_present_queue_family_index( const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader );
+
+	vk::Device create_device( const vk::Instance& instance, const vk::PhysicalDevice& physical_device, const std::set<Uint32>& unique_queue_families );
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////

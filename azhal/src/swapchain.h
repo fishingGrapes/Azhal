@@ -1,6 +1,6 @@
 #pragma once
 
-namespace azhal
+namespace gdevice
 {
 	// TODO: change swapchain creation and deletion
 	struct Swapchain

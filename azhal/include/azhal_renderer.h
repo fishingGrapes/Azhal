@@ -3,4 +3,4 @@
 #include <vulkan/vulkan.hpp>
 
 #include "../src/window.h"
-#include "../src/core.h"
+#include "../src/gdevice.h"

@@ -105,7 +105,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace azhal
+namespace gdevice
 {
 	vk::Instance create_instance( const VulkanInstanceCreationParams& instance_creation_params )
 	{
@@ -156,7 +156,6 @@ namespace azhal
 
 		const vk::ResultValue rv_instance_create = vk::createInstance( instance_create_chain.get<vk::InstanceCreateInfo>() );
 		const vk::Instance& instance = get_vk_result( rv_instance_create, "failed to create instance" );
-		AZHAL_LOG_WARN( "vulkan instance created" );
 
 		return instance;
 	}
@@ -180,22 +179,58 @@ namespace azhal
 
 		VkResult result = glfwCreateWindowSurface( instance, static_cast< GLFWwindow* >( p_window ), VK_NULL_HANDLE, &surface );
 		AZHAL_FATAL_ASSERT( result == VkResult::VK_SUCCESS, "failed to create window surface" );
-		AZHAL_LOG_WARN( "vulkan surface created" );
 
 		return vk::SurfaceKHR( surface );
+	}
+
+
+	Uint32 find_queue_family_index( const vk::PhysicalDevice& physical_device, vk::QueueFlagBits queue_flag )
+	{
+		const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
+		for( Uint32 i = 0; i < queue_family_props.size(); ++i )
+		{
+			if( queue_family_props[ i ].queueFlags & queue_flag )
+			{
+				return i;
+			}
+		}
+
+		AZHAL_LOG_ALWAYS_ENABLED( "Failed to find an appropriate queue family for the given queue flag, {0}", queue_flag );
+		throw GDeviceException( "Failed to find queue family" );
+
+		return UINT32_MAX;
+	}
+
+
+	Uint32 find_present_queue_family_index( const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader )
+	{
+		const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
+		for( Uint32 i = 0; i < queue_family_props.size(); ++i )
+		{
+			const vk::ResultValue rv_surface_support = physical_device.getSurfaceSupportKHR( i, surface, dynamic_dispatch_loader );
+			if( rv_surface_support.result == vk::Result::eSuccess )
+			{
+				return rv_surface_support.value;
+			}
+		}
+
+		AZHAL_LOG_ALWAYS_ENABLED( "Failed to find  present queue family for the given queue flag" );
+		throw GDeviceException( "Failed to find present queue family" );
+
+		return UINT32_MAX;
 	}
 
 
 	vk::PhysicalDevice get_suitable_physical_device( const vk::Instance& instance )
 	{
 		const vk::ResultValue rv_physical_devices = instance.enumeratePhysicalDevices();
-		const std::vector<vk::PhysicalDevice>& physical_devices = azhal::get_vk_result( rv_physical_devices, "failed to enumerate physical devices" );
+		const std::vector<vk::PhysicalDevice>& physical_devices = gdevice::get_vk_result( rv_physical_devices, "failed to enumerate physical devices" );
 
 		// TODO: check for appropriate physical device props
 		const vk::PhysicalDevice selected_physical_device = physical_devices[ 0 ];
 
 		const vk::ResultValue rv_extension_props = selected_physical_device.enumerateDeviceExtensionProperties();
-		const std::vector<vk::ExtensionProperties>& extension_props = azhal::get_vk_result( rv_extension_props, "failed to get extension properties for device" );
+		const std::vector<vk::ExtensionProperties>& extension_props = gdevice::get_vk_result( rv_extension_props, "failed to get extension properties for device" );
 
 		const std::vector<const AnsiChar*>& required_extensions = get_required_device_extensions();
 		for( const AnsiChar* extension_name : required_extensions )
@@ -216,52 +251,8 @@ namespace azhal
 	}
 
 
-	vk::Device create_device( const vk::Instance& instance, const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader )
+	vk::Device create_device( const vk::Instance& instance, const vk::PhysicalDevice& physical_device, const std::set<Uint32>& unique_queue_families )
 	{
-		const auto find_queue_family_fn = [&physical_device]( vk::QueueFlagBits queue_flag, Bool is_present_queue = false )  -> Uint32
-		{
-			const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
-			for( Uint32 i = 0; i < queue_family_props.size(); ++i )
-			{
-				if( queue_family_props[ i ].queueFlags & queue_flag )
-				{
-					return i;
-				}
-			}
-
-			AZHAL_LOG_ALWAYS_ENABLED( "Failed to find an appropriate queue family for the given queue flag, {0}", queue_flag );
-			throw AzhalException( "Failed to find queue family" );
-		};
-
-		const auto find_present_queue_family_fn = [&physical_device, &surface, &dynamic_dispatch_loader]()  -> Uint32
-		{
-			const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
-			for( Uint32 i = 0; i < queue_family_props.size(); ++i )
-			{
-				const vk::ResultValue rv_surface_support = physical_device.getSurfaceSupportKHR( i, surface, dynamic_dispatch_loader );
-				if( rv_surface_support.result == vk::Result::eSuccess )
-				{
-					return rv_surface_support.value;
-				}
-			}
-
-			AZHAL_LOG_ALWAYS_ENABLED( "Failed to find  present queue family for the given queue flag" );
-			throw AzhalException( "Failed to find present queue family" );
-		};
-
-		const Uint32 graphics_queue_family = find_queue_family_fn( vk::QueueFlagBits::eGraphics );
-		const Uint32 compute_queue_family = find_queue_family_fn( vk::QueueFlagBits::eCompute );
-		const Uint32 transfer_queue_family = find_queue_family_fn( vk::QueueFlagBits::eTransfer );
-		const Uint32 present_queue_family = find_present_queue_family_fn();
-
-		const std::set<Uint32> unique_queue_families
-		{
-			graphics_queue_family,
-			compute_queue_family,
-			transfer_queue_family,
-			present_queue_family
-		};
-
 		std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
 		for( Uint32 queue_family : unique_queue_families )
 		{
@@ -301,7 +292,6 @@ namespace azhal
 
 		const vk::ResultValue rv_device = physical_device.createDevice( device_create_chain.get<vk::DeviceCreateInfo>() );
 		const vk::Device& device = get_vk_result( rv_device, "Failed to create vulkan device" );
-		AZHAL_LOG_WARN( "vulkan device created" );
 
 		return device;
 	}

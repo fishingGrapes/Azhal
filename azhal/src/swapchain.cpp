@@ -6,13 +6,13 @@ namespace
 	vk::SwapchainCreateInfoKHR build_swapchain_create_info( const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, vk::Extent2D desired_extent )
 	{
 		const vk::ResultValue rv_surface_caps = physical_device.getSurfaceCapabilitiesKHR( surface );
-		const vk::SurfaceCapabilitiesKHR& surface_caps = azhal::get_vk_result( rv_surface_caps, "failed to get surface capabilities" );
+		const vk::SurfaceCapabilitiesKHR& surface_caps = gdevice::get_vk_result( rv_surface_caps, "failed to get surface capabilities" );
 
 		const vk::ResultValue rv_surface_formats = physical_device.getSurfaceFormatsKHR( surface );
-		const std::vector<vk::SurfaceFormatKHR>& surface_formats = azhal::get_vk_result( rv_surface_formats, "failed to get surface formats" );
+		const std::vector<vk::SurfaceFormatKHR>& surface_formats = gdevice::get_vk_result( rv_surface_formats, "failed to get surface formats" );
 
 		const vk::ResultValue rv_surface_present_modes = physical_device.getSurfacePresentModesKHR( surface );
-		const std::vector<vk::PresentModeKHR>& surface_present_modes = azhal::get_vk_result( rv_surface_present_modes, "failed to get present modes" );
+		const std::vector<vk::PresentModeKHR>& surface_present_modes = gdevice::get_vk_result( rv_surface_present_modes, "failed to get present modes" );
 
 		AZHAL_FATAL_ASSERT( !surface_formats.empty() && !surface_present_modes.empty(), "swapchain support is not adequate" );
 
@@ -92,7 +92,7 @@ namespace
 	}
 }
 
-namespace azhal
+namespace gdevice
 {
 	Swapchain create_swapchain( const vk::PhysicalDevice& physical_device, const vk::Device& device, const vk::SurfaceKHR& surface, vk::Extent2D desired_extent )
 	{
@@ -100,7 +100,6 @@ namespace azhal
 
 		const vk::ResultValue rv_swapchain = device.createSwapchainKHR( swapchain_create_info );
 		vk::SwapchainKHR vk_swapchain = get_vk_result( rv_swapchain, "failed to create swapchain" );
-		AZHAL_LOG_WARN( "vulkan swapchain created" );
 
 		const vk::ResultValue rv_swapchain_images = device.getSwapchainImagesKHR( vk_swapchain );
 		const std::vector<vk::Image>& swapchain_images = get_vk_result( rv_swapchain_images, "failed to retrieve swapchain images" );
