@@ -10,6 +10,13 @@ namespace gdevice
 		ePresent = 3,
 		eTransfer = 4
 	};
+
+	enum AccessTypeBits : Uint32
+	{
+		eAccessTypeRead = 0x00000001,
+		eAccessTypeWrite = 0x00000002,
+		eAccessTypeReadWrite = ( eAccessTypeRead | eAccessTypeWrite )
+	};
 }
 
 
