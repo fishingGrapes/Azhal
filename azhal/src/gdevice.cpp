@@ -6,8 +6,19 @@
 #include "pso.h"
 #include "swapchain.h"
 #include "vulkan_init_helper.h"
+#include "vulkan_sync_utils.h"
 #include "window.h"
 
+#include "imgui_impl.h"
+
+gdevice::PSO pso;
+vk::Semaphore imageAvailableSemaphore, renderFinishedSemaphore;
+vk::Fence inflightFence;
+
+vk::Queue graphicsQueue;
+vk::Queue presentQueue;
+
+vk::CommandBuffer cmd_buffer;
 
 namespace
 {
@@ -139,27 +150,71 @@ namespace gdevice
 			.isDynamicRendering = VK_TRUE,
 			.colorAttachmentFormats = std::vector<vk::Format> { s_swapchain.imageFormat }
 		};
+		pso = create_pso( s_device, pso_creation_params );
 
-		PSO pso = create_pso( s_device, pso_creation_params );
-		vk::CommandBuffer cmd_buffer = allocate_command_buffer( s_device, QueueType::eGraphics );
+		const vk::ResultValue rv_image_avail_semaphore = s_device.createSemaphore( {} );
+		imageAvailableSemaphore = get_vk_result( rv_image_avail_semaphore );
+		const vk::ResultValue rv_render_finish_semaphore = s_device.createSemaphore( {} );
+		renderFinishedSemaphore = get_vk_result( rv_render_finish_semaphore );
 
+		const vk::FenceCreateInfo fence_create_info
+		{
+			.flags = vk::FenceCreateFlagBits::eSignaled
+		};
+		const vk::ResultValue rv_inflight_fence = s_device.createFence( fence_create_info );
+		inflightFence = get_vk_result( rv_inflight_fence );
 
+		graphicsQueue = s_device.getQueue( graphics_queue_family_index, 0 );
+		presentQueue = s_device.getQueue( present_queue_family_index, 0 );
 
-		destroy_pso( s_device, pso );
+		cmd_buffer = allocate_command_buffer( s_device, QueueType::eGraphics );
+
+		const ImguiInitParams imgui_init_params
+		{
+			.pWindow = gdevice_init_params.pWindow,
+			.instance = s_instance,
+			.physicalDevice = s_physicalDevice,
+			.device = s_device,
+			.graphicsQueueFamilyIndex = graphics_queue_family_index,
+			.graphicsQueue = graphicsQueue,
+			.swapchainImageFormat = s_swapchain.imageFormat,
+			.swapchainImageCount = VK_SIZE_CAST( s_swapchain.images.size() )
+		};
+		init_imgui( imgui_init_params );
 	}
 
 
 	void update()
 	{
-		vk::CommandBufferBeginInfo cmd_buffer_begin;
+		begin_imgui();
+
+		const vk::Result res_fence_wait = s_device.waitForFences( inflightFence, VK_TRUE, UINT32_MAX );
+		vk::resultCheck( res_fence_wait, "" );
+
+		const vk::Result res_rest_fences = s_device.resetFences( inflightFence );
+		vk::resultCheck( res_rest_fences, "" );
+
+		const vk::ResultValue rv_image_index = s_device.acquireNextImageKHR( s_swapchain.vkSwapchain, UINT32_MAX, imageAvailableSemaphore );
+		Uint32 image_index = get_vk_result( rv_image_index );
+
+
+		cmd_buffer.reset();
+
+		vk::CommandBufferBeginInfo cmd_buffer_begin_info {};
+		vk::Result res_cmd_buffer_begin = cmd_buffer.begin( cmd_buffer_begin_info );
+		vk::resultCheck( res_cmd_buffer_begin, "failed to begin command buffer" );
+
+		insert_image_pipeline_barrier( cmd_buffer, s_swapchain.images[ image_index ],
+			vk::ImageLayout::eUndefined, AccessTypeBits::eAccessTypeInvalid,
+			vk::ImageLayout::eColorAttachmentOptimal, AccessTypeBits::eAccessTypeWrite );
 
 		const vk::RenderingAttachmentInfo color_attachment_info
 		{
-			//.imageView = s_swapchain.imageViews,
+			.imageView = s_swapchain.imageViews[ image_index ],
 			.imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
 			.loadOp = vk::AttachmentLoadOp::eClear,
 			.storeOp = vk::AttachmentStoreOp::eStore,
-			.clearValue = std::array<Float, 4>{ 0.0f, 1.0f, 0.0f, 1.0f }
+			.clearValue = std::array<Float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f }
 		};
 
 		const vk::Rect2D render_area
@@ -176,11 +231,73 @@ namespace gdevice
 			.pColorAttachments = &color_attachment_info
 		};
 
+		cmd_buffer.beginRendering( rendering_info );
+		{
+			cmd_buffer.bindPipeline( vk::PipelineBindPoint::eGraphics, pso.vkPipelineObject );
+
+			const vk::Viewport viewport { 0.0f, 0.0f, static_cast< Float >( s_swapchain.imageExtent.width ), static_cast< Float >( s_swapchain.imageExtent.height ), 0.0f, 1.0f };
+			const vk::Rect2D scissor { {0, 0}, s_swapchain.imageExtent };
+
+			cmd_buffer.setViewport( 0, viewport );
+			cmd_buffer.setScissor( 0, scissor );
+
+			cmd_buffer.draw( 3, 1, 0, 0 );
+
+			end_imgui( cmd_buffer );
+		}
+		cmd_buffer.endRendering();
+
+		insert_image_pipeline_barrier( cmd_buffer, s_swapchain.images[ image_index ],
+			vk::ImageLayout::eColorAttachmentOptimal, AccessTypeBits::eAccessTypeWrite,
+			vk::ImageLayout::ePresentSrcKHR, AccessTypeBits::eAccessTypeInvalid );
+
+		vk::resultCheck( cmd_buffer.end(), "" );
+
+		const vk::PipelineStageFlags waitStageMask[ 1 ] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+
+		const vk::SubmitInfo submit_info
+		{
+			.waitSemaphoreCount = 1,
+			.pWaitSemaphores = &imageAvailableSemaphore,
+			.pWaitDstStageMask = waitStageMask,
+			.commandBufferCount = 1,
+			.pCommandBuffers = &cmd_buffer,
+			.signalSemaphoreCount = 1,
+			.pSignalSemaphores = &renderFinishedSemaphore
+		};
+
+		vk::Result res_submit_gfx_cmd_buffer = graphicsQueue.submit( submit_info, inflightFence );
+		vk::resultCheck( res_submit_gfx_cmd_buffer, "failed to submit gfx command buffer" );
+
+		const vk::PresentInfoKHR present_info
+		{
+			.waitSemaphoreCount = 1,
+			.pWaitSemaphores = &renderFinishedSemaphore,
+			.swapchainCount = 1,
+			.pSwapchains = &s_swapchain.vkSwapchain,
+			.pImageIndices = &image_index
+		};
+
+		vk::Result res_submit_present = presentQueue.presentKHR( present_info );
+		vk::resultCheck( res_submit_present, "failed to submit present command buffer" );
+
 	}
 
 
 	void shutdown()
 	{
+		vk::Result res_device_wait_idle = s_device.waitIdle();
+		vk::resultCheck( res_device_wait_idle, "" );
+
+		shutdown_imgui( s_device );
+		
+		free_command_buffer( s_device, QueueType::eGraphics, cmd_buffer );
+
+		s_device.destroy( imageAvailableSemaphore );
+		s_device.destroy( renderFinishedSemaphore );
+		s_device.destroy( inflightFence );
+		destroy_pso( s_device, pso );
+
 		destroy_command_pools( s_device );
 
 		destroy_swapchain( s_device, s_swapchain );

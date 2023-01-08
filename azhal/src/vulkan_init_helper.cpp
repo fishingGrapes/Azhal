@@ -99,7 +99,7 @@ namespace
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 			// already included in the core 1.3
 			//VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-			VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME
+			//VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME
 		};
 
 		return required_device_extensions;

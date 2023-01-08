@@ -35,6 +35,7 @@ Int32 main( int argc, char** argv )
 
 		do
 		{
+			gdevice::update();
 		} while( p_window->poll() );
 
 		gdevice::shutdown();

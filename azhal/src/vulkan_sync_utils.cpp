@@ -3,6 +3,7 @@
 
 #include "enums.h"
 //reading: https://gpuopen.com/learn/vulkan-barriers-explained/
+// https://themaister.net/blog/2019/08/14/yet-another-blog-explaining-vulkan-synchronization/
 
 namespace
 {
