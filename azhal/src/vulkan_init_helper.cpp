@@ -44,15 +44,17 @@ namespace
 
 	std::vector<vk::ValidationFeatureEnableEXT> get_enabled_validation_features( Bool enable_gpu_assisted_validation )
 	{
-		std::vector<vk::ValidationFeatureEnableEXT> validation_features;
+		std::vector<vk::ValidationFeatureEnableEXT> validation_features
+		{
+			 vk::ValidationFeatureEnableEXT::eBestPractices,
+			 // Enabling both eGpuAssited and eDebugPrintf would result in a validation error
+			 //vk::ValidationFeatureEnableEXT::eDebugPrintf,
+			 vk::ValidationFeatureEnableEXT::eSynchronizationValidation
+		};
 
 		if( enable_gpu_assisted_validation )
 		{
 			validation_features.push_back( vk::ValidationFeatureEnableEXT::eGpuAssisted );
-			validation_features.push_back( vk::ValidationFeatureEnableEXT::eBestPractices );
-			// Enabling both eGpuAssited and eDebugPrintf would result in a validation error
-			//validation_features.push_back(vk::ValidationFeatureEnableEXT::eDebugPrintf);
-			validation_features.push_back( vk::ValidationFeatureEnableEXT::eSynchronizationValidation );
 		}
 
 		return validation_features;
@@ -79,7 +81,7 @@ namespace
 			msg_severity_flags |= severity;
 		}
 
-		vk::DebugUtilsMessengerCreateInfoEXT debug_msg_create_info
+		const vk::DebugUtilsMessengerCreateInfoEXT debug_msg_create_info
 		{
 			.messageSeverity = msg_severity_flags,
 			.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
@@ -90,12 +92,13 @@ namespace
 	}
 
 
-	std::vector<const AnsiChar*> get_required_device_extensions()
+	AZHAL_INLINE std::vector<const AnsiChar*> get_required_device_extensions()
 	{
 		static const std::vector<const AnsiChar*> required_device_extensions
 		{
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-			VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+			// already included in the core 1.3
+			//VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
 			VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME
 		};
 
@@ -118,8 +121,8 @@ namespace gdevice
 			.apiVersion = VK_API_VERSION_1_3
 		};
 
-		const std::vector<const AnsiChar*>& validation_layers = get_validation_layers( instance_creation_params.enableValidationLayers );
-		const std::vector<const AnsiChar*>& required_extensions = get_required_instance_extensions();
+		const std::vector<const AnsiChar*> validation_layers = get_validation_layers( instance_creation_params.enableValidationLayers );
+		const std::vector<const AnsiChar*> required_extensions = get_required_instance_extensions();
 
 		vk::InstanceCreateInfo instance_create_info
 		{
@@ -132,7 +135,7 @@ namespace gdevice
 		};
 
 #ifdef AZHAL_ENABLE_LOGGING
-		const std::vector<vk::ValidationFeatureEnableEXT>& enabled_validation_features = get_enabled_validation_features( instance_creation_params.enableGpuAssistedValidation );
+		const std::vector<vk::ValidationFeatureEnableEXT> enabled_validation_features = get_enabled_validation_features( instance_creation_params.enableGpuAssistedValidation );
 		const vk::ValidationFeaturesEXT validation_features_info
 		{
 			.enabledValidationFeatureCount = VK_SIZE_CAST( enabled_validation_features.size() ),
@@ -141,7 +144,7 @@ namespace gdevice
 			.pDisabledValidationFeatures = VK_NULL_HANDLE
 		};
 
-		const vk::DebugUtilsMessengerCreateInfoEXT& debug_utils_create_info =
+		const vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info =
 			build_debug_messenger_create_info( instance_creation_params.debugMessageSeverity, instance_creation_params.debugCallbackFn );
 
 		const vk::StructureChain<vk::InstanceCreateInfo, vk::ValidationFeaturesEXT, vk::DebugUtilsMessengerCreateInfoEXT> instance_create_chain
@@ -155,25 +158,25 @@ namespace gdevice
 #endif
 
 		const vk::ResultValue rv_instance_create = vk::createInstance( instance_create_chain.get<vk::InstanceCreateInfo>() );
-		const vk::Instance& instance = get_vk_result( rv_instance_create, "failed to create instance" );
+		const vk::Instance instance = get_vk_result( rv_instance_create, "failed to create instance" );
 
 		return instance;
-	}
+		}
 
 
-	vk::DebugUtilsMessengerEXT create_debug_messenger( const vk::Instance& instance, vk::DebugUtilsMessageSeverityFlagBitsEXT debug_message_severity,
+	vk::DebugUtilsMessengerEXT create_debug_messenger( const vk::Instance instance, vk::DebugUtilsMessageSeverityFlagBitsEXT debug_message_severity,
 		const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader )
 	{
-		const vk::DebugUtilsMessengerCreateInfoEXT& debug_utils_create_info = build_debug_messenger_create_info( debug_message_severity, debug_callback_fn );
+		const vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = build_debug_messenger_create_info( debug_message_severity, debug_callback_fn );
 
 		const vk::ResultValue rv_debug_msgnr = instance.createDebugUtilsMessengerEXT( debug_utils_create_info, VK_NULL_HANDLE, dynamic_dispatch_loader );
-		const vk::DebugUtilsMessengerEXT& debug_messenger = get_vk_result( rv_debug_msgnr, "failed to create debug messenger" );
+		const vk::DebugUtilsMessengerEXT debug_messenger = get_vk_result( rv_debug_msgnr, "failed to create debug messenger" );
 
 		return debug_messenger;
 	}
 
 
-	vk::SurfaceKHR create_vulkan_surface( const vk::Instance& instance, void* p_window )
+	vk::SurfaceKHR create_vulkan_surface( const vk::Instance instance, void* p_window )
 	{
 		VkSurfaceKHR surface = VK_NULL_HANDLE;
 
@@ -184,9 +187,9 @@ namespace gdevice
 	}
 
 
-	Uint32 find_queue_family_index( const vk::PhysicalDevice& physical_device, vk::QueueFlagBits queue_flag )
+	Uint32 find_queue_family_index( const vk::PhysicalDevice physical_device, vk::QueueFlagBits queue_flag )
 	{
-		const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
+		const std::vector<vk::QueueFamilyProperties> queue_family_props = physical_device.getQueueFamilyProperties();
 		for( Uint32 i = 0; i < queue_family_props.size(); ++i )
 		{
 			if( queue_family_props[ i ].queueFlags & queue_flag )
@@ -202,9 +205,9 @@ namespace gdevice
 	}
 
 
-	Uint32 find_present_queue_family_index( const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader )
+	Uint32 find_present_queue_family_index( const vk::PhysicalDevice physical_device, const vk::SurfaceKHR surface, const vk::DispatchLoaderDynamic& dynamic_dispatch_loader )
 	{
-		const std::vector<vk::QueueFamilyProperties>& queue_family_props = physical_device.getQueueFamilyProperties();
+		const std::vector<vk::QueueFamilyProperties> queue_family_props = physical_device.getQueueFamilyProperties();
 		for( Uint32 i = 0; i < queue_family_props.size(); ++i )
 		{
 			const vk::ResultValue rv_surface_support = physical_device.getSurfaceSupportKHR( i, surface, dynamic_dispatch_loader );
@@ -221,18 +224,18 @@ namespace gdevice
 	}
 
 
-	vk::PhysicalDevice get_suitable_physical_device( const vk::Instance& instance )
+	vk::PhysicalDevice get_suitable_physical_device( const vk::Instance instance )
 	{
 		const vk::ResultValue rv_physical_devices = instance.enumeratePhysicalDevices();
-		const std::vector<vk::PhysicalDevice>& physical_devices = gdevice::get_vk_result( rv_physical_devices, "failed to enumerate physical devices" );
+		const std::vector<vk::PhysicalDevice> physical_devices = gdevice::get_vk_result( rv_physical_devices, "failed to enumerate physical devices" );
 
 		// TODO: check for appropriate physical device props
 		const vk::PhysicalDevice selected_physical_device = physical_devices[ 0 ];
 
 		const vk::ResultValue rv_extension_props = selected_physical_device.enumerateDeviceExtensionProperties();
-		const std::vector<vk::ExtensionProperties>& extension_props = gdevice::get_vk_result( rv_extension_props, "failed to get extension properties for device" );
+		const std::vector<vk::ExtensionProperties> extension_props = gdevice::get_vk_result( rv_extension_props, "failed to get extension properties for device" );
 
-		const std::vector<const AnsiChar*>& required_extensions = get_required_device_extensions();
+		const std::vector<const AnsiChar*> required_extensions = get_required_device_extensions();
 		for( const AnsiChar* extension_name : required_extensions )
 		{
 			const auto iter = std::find_if
@@ -251,23 +254,23 @@ namespace gdevice
 	}
 
 
-	vk::Device create_device( const vk::Instance& instance, const vk::PhysicalDevice& physical_device, const std::set<Uint32>& unique_queue_families )
+	vk::Device create_device( const vk::Instance instance, const vk::PhysicalDevice physical_device, const std::set<Uint32>& unique_queue_families )
 	{
 		std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
 		for( Uint32 queue_family : unique_queue_families )
 		{
 			// TODO: queue_priority
-			static const Float QUEUE_PRIORITY = 1.0f;
+			static const Float K_QUEUE_PRIORITY = 1.0f;
 			const vk::DeviceQueueCreateInfo queue_create_info
 			{
 				.queueFamilyIndex = queue_family,
 				.queueCount = 1,
-				.pQueuePriorities = &QUEUE_PRIORITY
+				.pQueuePriorities = &K_QUEUE_PRIORITY
 			};
 			queue_create_infos.emplace_back( queue_create_info );
 		}
 
-		const std::vector<const AnsiChar*>& required_extensions = get_required_device_extensions();
+		const std::vector<const AnsiChar*> required_extensions = get_required_device_extensions();
 
 		const vk::DeviceCreateInfo device_create_info
 		{
@@ -291,8 +294,8 @@ namespace gdevice
 		};
 
 		const vk::ResultValue rv_device = physical_device.createDevice( device_create_chain.get<vk::DeviceCreateInfo>() );
-		const vk::Device& device = get_vk_result( rv_device, "Failed to create vulkan device" );
+		const vk::Device device = get_vk_result( rv_device, "Failed to create vulkan device" );
 
 		return device;
 	}
-}
+	}

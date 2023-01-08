@@ -3,21 +3,21 @@
 
 namespace
 {
-	vk::SwapchainCreateInfoKHR build_swapchain_create_info( const vk::PhysicalDevice& physical_device, const vk::SurfaceKHR& surface, vk::Extent2D desired_extent )
+	vk::SwapchainCreateInfoKHR build_swapchain_create_info( const vk::PhysicalDevice physical_device, const vk::SurfaceKHR surface, vk::Extent2D desired_extent )
 	{
 		const vk::ResultValue rv_surface_caps = physical_device.getSurfaceCapabilitiesKHR( surface );
-		const vk::SurfaceCapabilitiesKHR& surface_caps = gdevice::get_vk_result( rv_surface_caps, "failed to get surface capabilities" );
+		const vk::SurfaceCapabilitiesKHR surface_caps = gdevice::get_vk_result( rv_surface_caps, "failed to get surface capabilities" );
 
 		const vk::ResultValue rv_surface_formats = physical_device.getSurfaceFormatsKHR( surface );
-		const std::vector<vk::SurfaceFormatKHR>& surface_formats = gdevice::get_vk_result( rv_surface_formats, "failed to get surface formats" );
+		const std::vector<vk::SurfaceFormatKHR> surface_formats = gdevice::get_vk_result( rv_surface_formats, "failed to get surface formats" );
 
 		const vk::ResultValue rv_surface_present_modes = physical_device.getSurfacePresentModesKHR( surface );
-		const std::vector<vk::PresentModeKHR>& surface_present_modes = gdevice::get_vk_result( rv_surface_present_modes, "failed to get present modes" );
+		const std::vector<vk::PresentModeKHR> surface_present_modes = gdevice::get_vk_result( rv_surface_present_modes, "failed to get present modes" );
 
 		AZHAL_FATAL_ASSERT( !surface_formats.empty() && !surface_present_modes.empty(), "swapchain support is not adequate" );
 
 		// choose format and color-space
-		auto [format, color_space] = [&surface_formats]() -> std::tuple<vk::Format, vk::ColorSpaceKHR>
+		const auto [format, color_space] = [&surface_formats]() -> std::tuple<vk::Format, vk::ColorSpaceKHR>
 		{
 			for( const vk::SurfaceFormatKHR& format : surface_formats )
 			{
@@ -34,13 +34,12 @@ namespace
 		// choose present mode
 		vk::PresentModeKHR present_mode = [&surface_present_modes]() -> vk::PresentModeKHR
 		{
-			for( const vk::PresentModeKHR& present_mode : surface_present_modes )
+			for( const vk::PresentModeKHR present_mode : surface_present_modes )
 			{
 				if( present_mode == vk::PresentModeKHR::eMailbox )
 				{
 					return vk::PresentModeKHR::eMailbox;
 				}
-
 			}
 
 			AZHAL_LOG_ALWAYS_ENABLED( "failed to get appropriate present mode for swapchain. fallback to FIFO mode." );
@@ -48,7 +47,7 @@ namespace
 		}( );
 
 		// choose swapchain extent
-		vk::Extent2D swapchain_extent = [&desired_extent, &surface_caps]() -> vk::Extent2D
+		vk::Extent2D swapchain_extent = [desired_extent, &surface_caps]() -> vk::Extent2D
 		{
 			// if the current extent width is see to the special value UINT32_MAX, then the extent of the swapchain
 			// can differ from the window resolution
@@ -94,19 +93,19 @@ namespace
 
 namespace gdevice
 {
-	Swapchain create_swapchain( const vk::PhysicalDevice& physical_device, const vk::Device& device, const vk::SurfaceKHR& surface, vk::Extent2D desired_extent )
+	Swapchain create_swapchain( const vk::PhysicalDevice physical_device, const vk::Device device, const vk::SurfaceKHR surface, vk::Extent2D desired_extent )
 	{
-		const vk::SwapchainCreateInfoKHR& swapchain_create_info = build_swapchain_create_info( physical_device, surface, desired_extent );
+		const vk::SwapchainCreateInfoKHR swapchain_create_info = build_swapchain_create_info( physical_device, surface, desired_extent );
 
 		const vk::ResultValue rv_swapchain = device.createSwapchainKHR( swapchain_create_info );
 		vk::SwapchainKHR vk_swapchain = get_vk_result( rv_swapchain, "failed to create swapchain" );
 
 		const vk::ResultValue rv_swapchain_images = device.getSwapchainImagesKHR( vk_swapchain );
-		const std::vector<vk::Image>& swapchain_images = get_vk_result( rv_swapchain_images, "failed to retrieve swapchain images" );
+		const std::vector<vk::Image> swapchain_images = get_vk_result( rv_swapchain_images, "failed to retrieve swapchain images" );
 
 		std::vector<vk::ImageView> swapchain_imageviews;
 		swapchain_imageviews.reserve( swapchain_images.size() );
-		for( const vk::Image& image : swapchain_images )
+		for( const vk::Image image : swapchain_images )
 		{
 			vk::ImageViewCreateInfo image_view_create_info
 			{
@@ -153,14 +152,15 @@ namespace gdevice
 	}
 
 
-	void destroy_swapchain( const vk::Device& device, Swapchain& swapchain )
+	void destroy_swapchain( const vk::Device device, Swapchain& swapchain )
 	{
-		for( const vk::ImageView& image_view : swapchain.imageViews )
+		std::vector<vk::ImageView>& swapchain_image_views = swapchain.imageViews;
+		for( const vk::ImageView image_view : swapchain_image_views )
 		{
 			device.destroy( image_view );
 		}
 
-		swapchain.imageViews.clear();
+		swapchain_image_views.clear();
 		swapchain.images.clear();
 
 		device.destroy( swapchain.vkSwapchain );

@@ -81,7 +81,7 @@ namespace gdevice
 {
 	void init( const GDeviceInitParams& gdevice_init_params )
 	{
-		const PFN_vkDebugUtilsMessengerCallbackEXT& debug_callback_fn = reinterpret_cast< PFN_vkDebugUtilsMessengerCallbackEXT >( vk_debug_callback );
+		const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback_fn = reinterpret_cast< PFN_vkDebugUtilsMessengerCallbackEXT >( vk_debug_callback );
 
 		const VulkanInstanceCreationParams instance_creation_params
 		{
@@ -159,7 +159,7 @@ namespace gdevice
 			.imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
 			.loadOp = vk::AttachmentLoadOp::eClear,
 			.storeOp = vk::AttachmentStoreOp::eStore,
-			.clearValue = std::array<Float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f }
+			.clearValue = std::array<Float, 4>{ 0.0f, 1.0f, 0.0f, 1.0f }
 		};
 
 		const vk::Rect2D render_area

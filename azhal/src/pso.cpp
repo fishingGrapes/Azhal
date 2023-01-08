@@ -3,11 +3,11 @@
 
 namespace gdevice
 {
-	PSO create_pso( const vk::Device& device, const PSOCreationParams& pso_creation_params )
+	PSO create_pso( const vk::Device device, const PSOCreationParams& pso_creation_params )
 	{
-		const auto shader_module_create_fn = [&device]( const AnsiChar* file_path ) -> const vk::ShaderModule
+		const auto shader_module_create_fn = [device]( const AnsiChar* file_path ) -> const vk::ShaderModule
 		{
-			const ByteBufferDynamic& shader_code = LoadBinaryBlob( file_path );
+			const ByteBufferDynamic shader_code = LoadBinaryBlob( file_path );
 			const vk::ShaderModuleCreateInfo shader_create_info
 			{
 				.codeSize = VK_SIZE_CAST( shader_code.size() ),
@@ -17,8 +17,8 @@ namespace gdevice
 			return ( get_vk_result( rv_shader_module, "failed to create shader module" ) );
 		};
 
-		const vk::ShaderModule& vertex_shader_module = shader_module_create_fn( pso_creation_params.pVertexShader );
-		const vk::ShaderModule& fragment_shader_module = shader_module_create_fn( pso_creation_params.pFragmentShader );
+		const vk::ShaderModule vertex_shader_module = shader_module_create_fn( pso_creation_params.pVertexShader );
+		const vk::ShaderModule fragment_shader_module = shader_module_create_fn( pso_creation_params.pFragmentShader );
 
 		const vk::PipelineShaderStageCreateInfo vertex_shader_stage_create_info
 		{
@@ -115,7 +115,7 @@ namespace gdevice
 			.pPushConstantRanges = VK_NULL_HANDLE
 		};
 		const vk::ResultValue rv_pipleline_layout = device.createPipelineLayout( pipeline_layout_create_info );
-		const vk::PipelineLayout& pipeline_layout = get_vk_result( rv_pipleline_layout, "failed to create pipeline layout" );
+		const vk::PipelineLayout pipeline_layout = get_vk_result( rv_pipleline_layout, "failed to create pipeline layout" );
 
 		const vk::PipelineRenderingCreateInfo pipeline_rendering_create_info
 		{
@@ -146,7 +146,7 @@ namespace gdevice
 		};
 
 		const vk::ResultValue rv_graphics_pipeline = device.createGraphicsPipeline( VK_NULL_HANDLE, graphics_pipeline_creation_chain.get<vk::GraphicsPipelineCreateInfo>() );
-		const vk::Pipeline& vk_pipeline = get_vk_result( rv_graphics_pipeline, "failed to create graphics pipeline" );
+		const vk::Pipeline vk_pipeline = get_vk_result( rv_graphics_pipeline, "failed to create graphics pipeline" );
 
 		device.destroy( vertex_shader_module );
 		device.destroy( fragment_shader_module );
@@ -160,7 +160,7 @@ namespace gdevice
 		return pso;
 	}
 
-	void destroy_pso( const vk::Device& device, PSO& pso )
+	void destroy_pso( const vk::Device device, PSO& pso )
 	{
 		device.destroy( pso.vkPipelineObject );
 		device.destroy( pso.pipelineLayout );

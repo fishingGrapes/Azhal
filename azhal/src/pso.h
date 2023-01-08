@@ -17,7 +17,7 @@ namespace gdevice
 		vk::Pipeline vkPipelineObject;
 	};
 
-	PSO create_pso( const vk::Device& device, const PSOCreationParams& pso_creation_params );
-	void destroy_pso( const vk::Device& device, PSO& pso );
+	PSO create_pso( const vk::Device device, const PSOCreationParams& pso_creation_params );
+	void destroy_pso( const vk::Device device, PSO& pso );
 
 }
