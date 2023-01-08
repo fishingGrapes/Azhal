@@ -11,6 +11,13 @@
 
 //https://frguthmann.github.io/posts/vulkan_imgui/
 
+//TODO: fix validation error
+//[ VUID-vkDestroyDevice-device-00378 ] Object 0: handle = 0x164b7712fd0, type = VK_OBJECT_TYPE_DEVICE; Object 1: handle = 0x27d60e0000000019, type = VK_OBJECT_TYPE_RENDER_PASS; 
+//MessageID = 0x71500fba | OBJ ERROR : For VkDevice 0x164b7712fd0[], VkRenderPass 0x27d60e0000000019[] has not been destroyed.
+//The Vulkan spec states: All child objects created on device must have been destroyed prior to destroying device 
+//(https://vulkan.lunarg.com/doc/view/1.3.236.0/windows/1.3-extensions/vkspec.html#VUID-vkDestroyDevice-device-00378)
+
+
 namespace
 {
 	vk::DescriptorPool s_descriptorPool;
@@ -171,6 +178,7 @@ namespace gdevice
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 
 		free_command_buffer( init_params.device, QueueType::eGraphics, font_upload_cmd_buffer );
+		init_params.device.destroy( font_upload_fence );
 	}
 
 
@@ -191,6 +199,7 @@ namespace gdevice
 
 	void shutdown_imgui( const vk::Device device )
 	{
+		device.destroy( s_renderpass );
 		device.destroy( s_descriptorPool );
 		ImGui_ImplVulkan_Shutdown();
 	}
