@@ -79,4 +79,26 @@ namespace gdevice
 
 		return cmd_buffers[ 0 ];
 	}
+
+	void free_command_buffer( vk::Device device, QueueType queue_type, vk::CommandBuffer cmd_buffer )
+	{
+		switch( queue_type )
+		{
+		case gdevice::QueueType::eGraphics:
+			device.freeCommandBuffers( s_graphicsCommandPool, cmd_buffer );
+			break;
+		case gdevice::QueueType::eCompute:
+			device.freeCommandBuffers( s_computeCommandPool, cmd_buffer );
+			break;
+		case gdevice::QueueType::ePresent:
+			device.freeCommandBuffers( s_presentCommandPool, cmd_buffer );
+			break;
+		case gdevice::QueueType::eTransfer:
+			device.freeCommandBuffers( s_transferCommandPool, cmd_buffer );
+			break;
+		case gdevice::QueueType::eInvalid:
+		default:
+			break;
+		}
+	}
 }

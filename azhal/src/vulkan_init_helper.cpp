@@ -161,7 +161,7 @@ namespace gdevice
 		const vk::Instance instance = get_vk_result( rv_instance_create, "failed to create instance" );
 
 		return instance;
-		}
+	}
 
 
 	vk::DebugUtilsMessengerEXT create_debug_messenger( const vk::Instance instance, vk::DebugUtilsMessageSeverityFlagBitsEXT debug_message_severity,
@@ -211,9 +211,11 @@ namespace gdevice
 		for( Uint32 i = 0; i < queue_family_props.size(); ++i )
 		{
 			const vk::ResultValue rv_surface_support = physical_device.getSurfaceSupportKHR( i, surface, dynamic_dispatch_loader );
-			if( rv_surface_support.result == vk::Result::eSuccess )
+			const Bool has_present_support = get_vk_result( rv_surface_support, "failed to get surface support for physical device" );
+
+			if( has_present_support )
 			{
-				return rv_surface_support.value;
+				return i;
 			}
 		}
 
@@ -298,4 +300,4 @@ namespace gdevice
 
 		return device;
 	}
-	}
+}

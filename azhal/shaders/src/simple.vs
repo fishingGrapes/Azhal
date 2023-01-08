@@ -24,7 +24,7 @@ VS_OUTPUT main( uint VertexIndex : SV_VERTEXID )
 {
   VS_OUTPUT output = (VS_OUTPUT) 0;
  
-  output.Position = float4( K_POSITIONS[VertexIndex], 0.0, 0.0 );
+  output.Position = float4( K_POSITIONS[VertexIndex], 0.0, 1.0 );
   output.Color = K_COLORS[VertexIndex];
   
   return output;

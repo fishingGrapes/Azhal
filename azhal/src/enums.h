@@ -13,6 +13,7 @@ namespace gdevice
 
 	enum AccessTypeBits : Uint32
 	{
+		eAccessTypeInvalid = 0x00000000,
 		eAccessTypeRead = 0x00000001,
 		eAccessTypeWrite = 0x00000002,
 		eAccessTypeReadWrite = ( eAccessTypeRead | eAccessTypeWrite )

@@ -16,4 +16,6 @@ namespace gdevice
 	void destroy_command_pools( const vk::Device& device );
 
 	vk::CommandBuffer allocate_command_buffer( const vk::Device& device, QueueType queue_type, vk::CommandBufferLevel cmd_buffer_level = vk::CommandBufferLevel::ePrimary );
+	void free_command_buffer( vk::Device device, QueueType queue_type, vk::CommandBuffer cmd_buffer );
+
 }
