@@ -31,13 +31,13 @@ Int32 main( int argc, char** argv )
 			.debugMessageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose,
 			.isGpuAssistedValidationEnabled = is_gpu_assisted_validation_enabled
 		};
-		gdevice::init( gdevice_init_params );
+		gdevice::Context gctx = gdevice::init( gdevice_init_params );
 
 		do
 		{
 		} while( p_window->poll() );
 
-		gdevice::shutdown();
+		gdevice::shutdown( gctx );
 	}
 	catch( GDeviceException& e )
 	{

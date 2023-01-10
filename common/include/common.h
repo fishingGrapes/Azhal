@@ -8,3 +8,4 @@
 #include "../src/exception.h"
 #include "../src/profiler.h"
 #include "../src/fileio.h"
+#include "../src/non_copyable.h"

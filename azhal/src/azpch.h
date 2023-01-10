@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string_view>
+#include <ranges>
 #include <set>
 
 #include "common.h"

@@ -4,6 +4,7 @@
 
 #define AZHAL_INLINE __inline
 #define AZHAL_FORCE_INLINE __forceinline
+#define AZHAL_NO_INLINE  __declspec(noinline)
 #define AZHAL_DEBUG_BREAK __debugbreak
 
 #define AZHAL_FILE __FILE__

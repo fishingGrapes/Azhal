@@ -93,7 +93,7 @@ namespace
 
 namespace gdevice
 {
-	Swapchain create_swapchain( const vk::PhysicalDevice physical_device, const vk::Device device, const vk::SurfaceKHR surface, vk::Extent2D desired_extent )
+	Swapchain create_swapchain( const vk::PhysicalDevice physical_device, const vk::Device device, const vk::SurfaceKHR surface, const vk::Extent2D& desired_extent )
 	{
 		const vk::SwapchainCreateInfoKHR swapchain_create_info = build_swapchain_create_info( physical_device, surface, desired_extent );
 
@@ -137,16 +137,15 @@ namespace gdevice
 			swapchain_imageviews.push_back( image_view );
 		}
 
-		const Swapchain swapchain
-		{
-			.vkSwapchain = vk_swapchain,
-			.images = swapchain_images,
-			.imageViews = swapchain_imageviews,
-			.imageExtent = swapchain_create_info.imageExtent,
-			.imageFormat = swapchain_create_info.imageFormat,
-			.imageColorSpace = swapchain_create_info.imageColorSpace,
-			.presentMode = swapchain_create_info.presentMode,
-		};
+		Swapchain swapchain(
+			vk_swapchain,
+			swapchain_images,
+			swapchain_imageviews,
+			swapchain_create_info.imageExtent,
+			swapchain_create_info.imageFormat,
+			swapchain_create_info.imageColorSpace,
+			swapchain_create_info.presentMode
+		);
 
 		return swapchain;
 	}
@@ -164,5 +163,15 @@ namespace gdevice
 		swapchain.images.clear();
 
 		device.destroy( swapchain.vkSwapchain );
+	}
+
+
+	Swapchain recreate_swapchain( const vk::PhysicalDevice physical_device, const vk::Device device, const vk::SurfaceKHR surface, const vk::Extent2D& desired_extent, Swapchain& old_swapchain )
+	{
+		const vk::Result res_device_wait_idle = device.waitIdle();
+		vk::resultCheck( res_device_wait_idle, "failed to wait for device idle while recreating swapchain" );
+
+		destroy_swapchain( device, old_swapchain );
+		return ( create_swapchain( physical_device, device, surface, desired_extent ) );
 	}
 }
